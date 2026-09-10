@@ -2,13 +2,16 @@
 
 Лабораторна робота №1 з курсу "Професійний Python".
 
-Варіант №12: фінансовий трекер.
+Варіант №12:
+
+- Лабораторна робота №1: фінансовий трекер.
+- Лабораторна робота №2: аналіз завдань проєкту.
 
 ## Description
 
-Console application for tracking income and expense operations.
-The project demonstrates src-layout, a data model, business logic,
-type hints, tests and a command-line entry point.
+Console application for laboratory works in Professional Python.
+The project demonstrates src-layout, data models, business logic,
+structured data processing, type hints, tests and a command-line entry point.
 
 ## Requirements
 
@@ -44,8 +47,14 @@ python -m unittest discover -s tests
 ```text
 src/finance_tracker/models.py
 src/finance_tracker/services.py
+src/finance_tracker/data.py
+src/finance_tracker/processors.py
+src/finance_tracker/analytics.py
+src/finance_tracker/decorators.py
+src/finance_tracker/benchmark.py
 src/finance_tracker/main.py
 tests/test_services.py
+tests/test_task_analysis.py
 ```
 
 ## Author

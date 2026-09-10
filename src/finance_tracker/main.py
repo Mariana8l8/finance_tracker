@@ -1,135 +1,144 @@
-"""Console entry point for the finance tracker application."""
+"""Console entry point for laboratory work 2."""
 
-from datetime import date
-
-from finance_tracker.models import Operation
-from finance_tracker.services import (
-    add_operation,
-    calculate_balance,
-    calculate_expenses,
-    calculate_expenses_by_category,
-    calculate_income,
-    filter_by_category,
-    sort_by_date,
+from finance_tracker.analytics import (
+    build_summary,
+    get_complexity_notes,
+    rank_assignees_by_task_count,
+    rank_priorities,
+)
+from finance_tracker.benchmark import benchmark_search
+from finance_tracker.data import Task, tasks
+from finance_tracker.processors import (
+    build_recent_history,
+    calculate_total_tasks,
+    count_tasks_by_priority,
+    count_tasks_by_status,
+    create_status_filter,
+    create_task_index,
+    create_task_record,
+    filter_tasks,
+    get_unfinished_tasks,
+    get_unique_assignees,
+    group_tasks_by_assignee,
+    group_tasks_by_assignee_and_status,
+    sort_tasks_by_priority,
 )
 
 
-def create_demo_operations() -> list[Operation]:
-    """Create demo operations for application output."""
-
-    operations: list[Operation] = []
-
-    add_operation(
-        operations,
-        Operation(
-            date=date(2026, 9, 1),
-            category="Salary",
-            amount=32000.00,
-            operation_type="income",
-        ),
-    )
-    add_operation(
-        operations,
-        Operation(
-            date=date(2026, 9, 3),
-            category="Food",
-            amount=1850.50,
-            operation_type="expense",
-        ),
-    )
-    add_operation(
-        operations,
-        Operation(
-            date=date(2026, 9, 5),
-            category="Transport",
-            amount=620.00,
-            operation_type="expense",
-        ),
-    )
-    add_operation(
-        operations,
-        Operation(
-            date=date(2026, 9, 7),
-            category="Freelance",
-            amount=7600.00,
-            operation_type="income",
-        ),
-    )
-    add_operation(
-        operations,
-        Operation(
-            date=date(2026, 9, 9),
-            category="Food",
-            amount=980.25,
-            operation_type="expense",
-        ),
-    )
-
-    return operations
-
-
-def print_operations(
-    operations: list[Operation],
+def print_tasks(
     title: str,
+    items: list[Task],
 ) -> None:
-    """Print operations as a table."""
+    """Print task dictionaries as a table."""
 
-    print(title)
-    print(f"{'Date':12}{'Category':16}{'Type':10}{'Amount':>10}")
-    print("-" * 48)
+    print(f"\n{title}")
+    print(f"{'ID':>3}  {'Title':35} {'Assignee':16} {'Priority':8} {'Status':12}")
+    print("-" * 84)
 
-    for operation in operations:
+    for task in items:
         print(
-            f"{operation.date.isoformat():12}"
-            f"{operation.category:16}"
-            f"{operation.operation_type:10}"
-            f"{operation.amount:10.2f}"
+            f"{int(task['id']):>3}  "
+            f"{str(task['title'])[:35]:35} "
+            f"{str(task['assignee'])[:16]:16} "
+            f"{str(task['priority']):8} "
+            f"{str(task['status']):12}"
         )
 
 
-def print_expenses_by_category(
-    expenses_by_category: dict[str, float],
+def print_counter(
+    title: str,
+    counter: dict[str, int],
 ) -> None:
-    """Print expense totals grouped by category."""
+    """Print Counter-like dictionaries."""
 
-    print("\nEXPENSES BY CATEGORY")
-    print(f"{'Category':16}{'Amount':>10}")
-    print("-" * 26)
+    print(f"\n{title}")
+    for key, value in counter.items():
+        print(f"{key:12} {value}")
 
-    for category, amount in expenses_by_category.items():
-        print(f"{category:16}{amount:10.2f}")
+
+def print_benchmark() -> None:
+    """Print benchmark results."""
+
+    print("\nBENCHMARK: LIST SEARCH VS DICT LOOKUP")
+    print(f"{'Records':>10} {'List search':>14} {'Dict build':>14} {'Dict lookup':>14}")
+    print("-" * 58)
+
+    for result in benchmark_search():
+        print(
+            f"{int(result['records']):>10} "
+            f"{result['list_search']:>14.8f} "
+            f"{result['dict_build']:>14.8f} "
+            f"{result['dict_lookup']:>14.8f}"
+        )
 
 
 def main() -> None:
-    """Run the demo console application."""
+    """Run the task data analysis demo."""
 
-    operations = create_demo_operations()
-
-    print_operations(
-        sort_by_date(operations),
-        "ALL OPERATIONS",
+    print_tasks(
+        "ALL PROJECT TASKS",
+        tasks,
     )
 
+    print("\nUnique assignees:", get_unique_assignees(tasks))
+    print_counter("TASKS BY STATUS", count_tasks_by_status(tasks))
+    print_counter("TASKS BY PRIORITY", count_tasks_by_priority(tasks))
+
+    print_tasks(
+        "UNFINISHED TASKS",
+        get_unfinished_tasks(tasks),
+    )
+
+    grouped = group_tasks_by_assignee(tasks)
+    print("\nGROUPED BY ASSIGNEE")
+    for assignee, assigned_tasks in grouped.items():
+        print(f"{assignee:16} {len(assigned_tasks)}")
+
+    nested = group_tasks_by_assignee_and_status(tasks)
+    print("\nNESTED GROUPING")
+    for assignee, statuses in nested.items():
+        compact = {
+            status: len(status_tasks)
+            for status, status_tasks in statuses.items()
+        }
+        print(f"{assignee:16} {compact}")
+
+    index = create_task_index(tasks)
+    print("\nSearch by ID:", index.get(4))
+
+    is_active = create_status_filter("todo", "in_progress", "review")
+    active_tasks = filter_tasks(tasks, is_active)
     print()
-    print(f"Total income:   {calculate_income(operations):10.2f}")
-    print(f"Total expenses: {calculate_expenses(operations):10.2f}")
-    print(f"Balance:        {calculate_balance(operations):10.2f}")
-
-    print_expenses_by_category(
-        calculate_expenses_by_category(operations),
+    print_tasks(
+        "FILTERED BY CLOSURE",
+        active_tasks,
     )
 
-    food_operations = filter_by_category(
-        operations,
-        "Food",
+    print_tasks(
+        "SORTED BY PRIORITY",
+        sort_tasks_by_priority(tasks),
     )
-    print()
-    print_operations(
-        food_operations,
-        "FOOD OPERATIONS",
+
+    created_task = create_task_record(
+        id=8,
+        title="Created with kwargs",
+        assignee="Oleh Koval",
+        priority="medium",
+        status="todo",
     )
+    print("\nCreated via **kwargs:", created_task)
+    print("Total via *args:", calculate_total_tasks(tasks, active_tasks))
+    print("Recent history via deque:", list(build_recent_history(tasks)))
+    print("Assignee rating:", rank_assignees_by_task_count(tasks))
+    print("Priority rating:", rank_priorities(tasks))
+    print("Summary:", build_summary(tasks))
+
+    print("\nCOMPLEXITY NOTES")
+    for operation, complexity in get_complexity_notes():
+        print(f"{operation:30} {complexity}")
+
+    print_benchmark()
 
 
 if __name__ == "__main__":
     main()
-

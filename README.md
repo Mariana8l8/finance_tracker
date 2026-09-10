@@ -69,5 +69,5 @@ tests/test_stream_pipeline.py
 
 ## Author
 
-Student: ____________________
-Group: ______________________
+Student: Roman Mariana
+Group: FEP-32

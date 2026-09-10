@@ -1,4 +1,6 @@
-"""Console entry point for laboratory work 2."""
+"""Console entry point for laboratory work 3."""
+
+from itertools import chain, islice
 
 from finance_tracker.analytics import (
     build_summary,
@@ -23,6 +25,20 @@ from finance_tracker.processors import (
     group_tasks_by_assignee_and_status,
     sort_tasks_by_priority,
 )
+from finance_tracker.stream_analytics import (
+    calculate_task_statistics,
+    cumulative_done_counts,
+    first_unfinished_tasks,
+    group_tasks_after_sorting,
+    infinite_task_numbers,
+    pairwise_task_id_gaps,
+    run_eager_lazy_experiment,
+)
+from finance_tracker.stream_batches import batched_tasks
+from finance_tracker.stream_data import DEFAULT_RECORD_COUNT, ensure_task_csv
+from finance_tracker.stream_filters import UNFINISHED_STATUSES
+from finance_tracker.stream_models import PriorityIterable, TaskRecord
+from finance_tracker.stream_pipeline import build_task_pipeline
 
 
 def print_tasks(
@@ -72,9 +88,30 @@ def print_benchmark() -> None:
         )
 
 
-def main() -> None:
-    """Run the task data analysis demo."""
+def print_stream_tasks(
+    title: str,
+    items: list[TaskRecord],
+) -> None:
+    """Print streamed task records as a compact table."""
 
+    print(f"\n{title}")
+    print(f"{'ID':>6}  {'Title':28} {'Assignee':16} {'Priority':8} {'Status':12}")
+    print("-" * 78)
+
+    for task in items:
+        print(
+            f"{task.task_id:>6}  "
+            f"{task.title[:28]:28} "
+            f"{task.assignee[:16]:16} "
+            f"{task.priority:8} "
+            f"{task.status:12}"
+        )
+
+
+def run_lab2_demo() -> None:
+    """Run the task data analysis demo from laboratory work 2."""
+
+    print("\n=== LAB 2 DATA ANALYSIS SNAPSHOT ===")
     print_tasks(
         "ALL PROJECT TASKS",
         tasks,
@@ -138,6 +175,76 @@ def main() -> None:
         print(f"{operation:30} {complexity}")
 
     print_benchmark()
+
+
+def run_lab3_demo() -> None:
+    """Run the streaming pipeline demo from laboratory work 3."""
+
+    print("\n=== LAB 3 STREAMING PIPELINE ===")
+    path = ensure_task_csv(count=DEFAULT_RECORD_COUNT)
+    print(f"Dataset: {path} ({DEFAULT_RECORD_COUNT} generated records + 1 invalid row)")
+
+    priorities = PriorityIterable(("high", "medium", "low"))
+    print("Custom iterator priorities:", list(priorities))
+    print("Custom iterator reused:", list(priorities))
+
+    pipeline = build_task_pipeline(
+        path,
+        statuses=UNFINISHED_STATUSES,
+        priorities={"high"},
+    )
+    first_tasks = list(islice(pipeline, 5))
+    print_stream_tasks("FIRST 5 UNFINISHED HIGH-PRIORITY TASKS", first_tasks)
+
+    assignee_pipeline = build_task_pipeline(
+        path,
+        assignee="Maryana Roman",
+    )
+    print_stream_tasks(
+        "LAZY ASSIGNEE FILTER",
+        list(islice(assignee_pipeline, 3)),
+    )
+
+    chained = chain(
+        build_task_pipeline(path, statuses={"todo"}),
+        build_task_pipeline(path, statuses={"review"}),
+    )
+    print_stream_tasks(
+        "CHAINED TODO + REVIEW STREAM",
+        list(islice(chained, 4)),
+    )
+
+    batch_pipeline = build_task_pipeline(path, statuses=UNFINISHED_STATUSES)
+    first_batch = next(batched_tasks(batch_pipeline, batch_size=4))
+    print_stream_tasks("FIRST BATCH", first_batch)
+
+    stats = calculate_task_statistics(build_task_pipeline(path))
+    print("\nSTREAMING STATISTICS")
+    print("Total valid records:", stats["total"])
+    print("Status counter:", stats["status_counter"])
+    print("Priority counter:", stats["priority_counter"])
+
+    print("First unfinished:", first_unfinished_tasks(build_task_pipeline(path), 3))
+    print("Grouped after sorting:", group_tasks_after_sorting(islice(build_task_pipeline(path), 30)))
+    print("Cumulative done counts:", cumulative_done_counts(build_task_pipeline(path), 8))
+    print("Pairwise task ID gaps:", pairwise_task_id_gaps(build_task_pipeline(path), 5))
+    print("Infinite count limited by islice:", infinite_task_numbers(10))
+
+    experiment = run_eager_lazy_experiment(path)
+    print("\nEAGER VS LAZY EXPERIMENT")
+    print(f"Eager count: {experiment['eager_count']:.0f}")
+    print(f"Lazy count: {experiment['lazy_count']:.0f}")
+    print(f"Eager time: {experiment['eager_time']:.6f} s")
+    print(f"Lazy time: {experiment['lazy_time']:.6f} s")
+    print(f"Eager peak memory: {experiment['eager_peak_mb']:.2f} MB")
+    print(f"Lazy peak memory: {experiment['lazy_peak_mb']:.2f} MB")
+    print(f"Time to first result: {experiment['time_to_first_result']:.6f} s")
+
+
+def main() -> None:
+    """Run the current laboratory demonstration."""
+
+    run_lab3_demo()
 
 
 if __name__ == "__main__":

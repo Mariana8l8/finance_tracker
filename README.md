@@ -50,5 +50,5 @@ tests/test_services.py
 
 ## Author
 
-Student: ____________________
-Group: ______________________
+Student: Roman Mariana
+Group: FEP-32

@@ -11,6 +11,7 @@ Variant 12 uses one cross-lab domain: finance tracker.
 - Laboratory work 5: reliable CSV import, YAML configuration, logging and JSON export.
 - Laboratory work 6: pytest test suite, mocks, tmp_path, monkeypatch and coverage.
 - Laboratory work 7: SQLite persistence layer, SQLAlchemy ORM, migrations and repositories.
+- Laboratory work 8: FastAPI REST API, Pydantic schemas, async tasks and HTTPX.
 
 ## Description
 
@@ -20,7 +21,7 @@ typed OOP design, custom exceptions, configuration, logging, validation and
 atomic export, automated testing with coverage, and database persistence.
 
 The current entry point demonstrates the laboratory work 7 SQLite persistence
-layer. Laboratory work 6 adds the automated pytest suite for the project.
+layer. Laboratory work 8 exposes the persistence layer through a FastAPI REST API.
 
 ## Requirements
 
@@ -81,6 +82,21 @@ src/finance_tracker/db_repositories.py
 src/finance_tracker/db_services.py
 src/finance_tracker/dbapi.py
 tests/integration/test_database_persistence_pytest.py
+```
+
+## Laboratory 8 Files
+
+```text
+src/finance_tracker/api.py
+src/finance_tracker/schemas.py
+src/finance_tracker/external_api.py
+tests/integration/test_api_pytest.py
+```
+
+Run the API:
+
+```bash
+uvicorn finance_tracker.api:app --reload
 ```
 
 ## Author

@@ -1,21 +1,24 @@
 # Finance Tracker
 
-Лабораторна робота №1 з курсу "Професійний Python".
+Laboratory project for the Professional Python course.
 
-Варіант №12:
+Variant 12 uses one cross-lab domain: finance tracker.
 
-- Лабораторна робота №1: фінансовий трекер.
-- Лабораторна робота №2: аналіз фінансових транзакцій.
-- Лабораторна робота №3: потокова обробка фінансових транзакцій.
-- Лабораторна робота №4: професійна ООП-модель фінансового трекера.
+- Laboratory work 1: project structure and basic finance tracker logic.
+- Laboratory work 2: structured finance transaction analysis.
+- Laboratory work 3: streaming transaction processing.
+- Laboratory work 4: professional typed OOP domain model.
+- Laboratory work 5: reliable CSV import, YAML configuration, logging and JSON export.
 
 ## Description
 
-Console application for laboratory works in Professional Python.
-The project demonstrates src-layout, data models, business logic,
-structured finance data processing, type hints, tests and a command-line entry point.
-The current entry point demonstrates the laboratory work 3 streaming pipeline.
-The current entry point demonstrates the laboratory work 4 OOP domain model.
+Console application for finance tracking laboratory works. The project
+demonstrates src-layout packaging, structured data processing, streaming I/O,
+typed OOP design, custom exceptions, configuration, logging, validation and
+atomic export.
+
+The current entry point demonstrates the laboratory work 5 reliable file
+pipeline.
 
 ## Requirements
 
@@ -25,7 +28,7 @@ Python 3.11+
 
 ```bash
 python -m venv .venv
-python -m pip install -e .
+python -m pip install -e ".[dev]"
 ```
 
 ## Run
@@ -44,37 +47,21 @@ finance-tracker
 
 ```bash
 python -m unittest discover -s tests
+python -m mypy src
 ```
 
-## Project Structure
+## Laboratory 5 Files
 
 ```text
-src/finance_tracker/models.py
-src/finance_tracker/services.py
-src/finance_tracker/data.py
-src/finance_tracker/processors.py
-src/finance_tracker/analytics.py
-src/finance_tracker/decorators.py
-src/finance_tracker/benchmark.py
-src/finance_tracker/stream_data.py
-src/finance_tracker/stream_models.py
-src/finance_tracker/stream_readers.py
-src/finance_tracker/stream_filters.py
-src/finance_tracker/stream_batches.py
-src/finance_tracker/stream_pipeline.py
-src/finance_tracker/stream_analytics.py
-src/finance_tracker/value_objects.py
-src/finance_tracker/domain.py
-src/finance_tracker/protocols.py
-src/finance_tracker/repositories.py
-src/finance_tracker/dto.py
-src/finance_tracker/policies.py
-src/finance_tracker/oop_services.py
-src/finance_tracker/main.py
-tests/test_services.py
-tests/test_finance_analysis.py
-tests/test_stream_pipeline.py
-tests/test_oop_domain.py
+config/lab5_config.yaml
+examples/lab5_transactions.csv
+src/finance_tracker/exceptions.py
+src/finance_tracker/config.py
+src/finance_tracker/logging_config.py
+src/finance_tracker/file_utils.py
+src/finance_tracker/file_pipeline.py
+src/finance_tracker/file_exporters.py
+tests/test_file_pipeline.py
 ```
 
 ## Author

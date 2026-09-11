@@ -1,0 +1,8 @@
+transaction_id,date,type,category,amount,description
+1,2026-09-01,income,Salary,32000.00,Monthly salary
+2,2026-09-03,expense,Food,1850.50,Groceries
+3,2026-09-04,expense,Transport,wrong,Invalid amount for chaining demo
+4,2026-09-05,transfer,Savings,500.00,Unsupported type
+5,2026-09-09,expense,Food,980.25,Lunch and household items
+6,2026-09-10,expense,,120.00,Missing category
+7,2026-09-11,income,Freelance,7600.00,Landing page project

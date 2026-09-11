@@ -1,0 +1,16 @@
+input:
+  path: ../examples/lab5_transactions.csv
+  format: csv
+
+output:
+  path: ../output/lab5_transactions.json
+  format: json
+
+processing:
+  skip_invalid: true
+  minimum_amount: 0
+  allowed_types: income,expense
+
+logging:
+  level: INFO
+  file: ../logs/lab5_import.log

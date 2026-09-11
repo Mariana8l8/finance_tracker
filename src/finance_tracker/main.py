@@ -1,6 +1,8 @@
 """Console entry point for the finance tracker laboratory project."""
 
 from itertools import chain, islice
+import logging
+from pathlib import Path
 from typing import cast
 
 from finance_tracker.analytics import (
@@ -10,7 +12,17 @@ from finance_tracker.analytics import (
     rank_categories_by_expenses,
 )
 from finance_tracker.benchmark import benchmark_search
+from finance_tracker.config import load_config
 from finance_tracker.data import Transaction, transactions
+from finance_tracker.exceptions import FinanceTrackerError
+from finance_tracker.file_exporters import JsonTransactionExporter
+from finance_tracker.file_pipeline import (
+    ImportStatistics,
+    compare_strict_tolerant,
+    import_transactions,
+)
+from finance_tracker.file_utils import logged_operation
+from finance_tracker.logging_config import configure_logging
 from finance_tracker.processors import (
     build_recent_history,
     calculate_total_transactions,
@@ -49,6 +61,9 @@ from finance_tracker.policies import CategoryLimitAlertPolicy
 from finance_tracker.protocols import BudgetExporter
 from finance_tracker.repositories import InMemoryRepository
 from finance_tracker.value_objects import Money
+
+
+logger = logging.getLogger(__name__)
 
 
 def print_transactions(
@@ -327,10 +342,63 @@ def run_lab4_demo() -> None:
     print("Export:", service.export_budget(1))
 
 
+def run_lab5_demo() -> None:
+    """Run the reliable import/export demo from laboratory work 5."""
+
+    print("\n=== LAB 5 RELIABLE FINANCE IMPORT/EXPORT ===")
+    config = load_config(Path("config") / "lab5_config.yaml")
+    configure_logging(
+        config.logging.level,
+        config.logging.file,
+    )
+
+    statistics = ImportStatistics()
+    exporter = JsonTransactionExporter()
+
+    with logged_operation("Finance CSV import/export"):
+        imported = import_transactions(
+            config.input.path,
+            allowed_types=config.processing.allowed_types,
+            minimum_amount=config.processing.minimum_amount,
+            skip_invalid=config.processing.skip_invalid,
+            statistics=statistics,
+        )
+        exported = exporter.export(imported, config.output.path)
+
+    policy_results = compare_strict_tolerant(
+        config.input.path,
+        allowed_types=config.processing.allowed_types,
+        minimum_amount=config.processing.minimum_amount,
+    )
+
+    logger.info(
+        "Total=%s, valid=%s, invalid=%s, exported=%s",
+        statistics.total,
+        statistics.valid,
+        statistics.invalid,
+        exported,
+    )
+
+    print(f"Config: {Path('config') / 'lab5_config.yaml'}")
+    print(f"Input: {config.input.path}")
+    print(f"Output: {config.output.path}")
+    print(f"Log: {config.logging.file}")
+    print(f"Total rows: {statistics.total}")
+    print(f"Valid rows: {statistics.valid}")
+    print(f"Invalid rows: {statistics.invalid}")
+    print(f"Exported rows: {exported}")
+    print("Strict mode before abort:", policy_results["strict"])
+    print("Tolerant mode:", policy_results["tolerant"])
+
+
 def main() -> None:
     """Run the current laboratory demonstration."""
 
-    run_lab4_demo()
+    try:
+        run_lab5_demo()
+    except FinanceTrackerError as error:
+        logging.getLogger(__name__).error("Application error: %s", error)
+        raise SystemExit(1) from error
 
 
 if __name__ == "__main__":

@@ -10,4 +10,5 @@ build/
 .env
 data/*.csv
 data/*.txt
-
+output/
+logs/

@@ -4,7 +4,11 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
+from sqlalchemy import Engine
+from sqlalchemy.orm import Session, sessionmaker
 
+from finance_tracker.database import create_sqlite_engine
+from finance_tracker.db_models import Base
 from finance_tracker.domain import Budget, Category, Expense
 from finance_tracker.value_objects import Money
 
@@ -56,3 +60,27 @@ def expense_transaction(food_category: Category) -> Expense:
         amount=Money(25.5),
         description="Lunch",
     )
+
+
+@pytest.fixture
+def sqlite_engine(tmp_path: Path) -> Iterator[Engine]:
+    database_path = tmp_path / "finance_tracker_test.db"
+    engine = create_sqlite_engine(f"sqlite:///{database_path.as_posix()}")
+    Base.metadata.create_all(engine)
+    yield engine
+    Base.metadata.drop_all(engine)
+    engine.dispose()
+
+
+@pytest.fixture
+def db_session(sqlite_engine: Engine) -> Iterator[Session]:
+    TestSession = sessionmaker(
+        bind=sqlite_engine,
+        expire_on_commit=False,
+        future=True,
+    )
+    session = TestSession()
+    try:
+        yield session
+    finally:
+        session.close()

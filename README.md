@@ -10,16 +10,17 @@ Variant 12 uses one cross-lab domain: finance tracker.
 - Laboratory work 4: professional typed OOP domain model.
 - Laboratory work 5: reliable CSV import, YAML configuration, logging and JSON export.
 - Laboratory work 6: pytest test suite, mocks, tmp_path, monkeypatch and coverage.
+- Laboratory work 7: SQLite persistence layer, SQLAlchemy ORM, migrations and repositories.
 
 ## Description
 
 Console application for finance tracking laboratory works. The project
 demonstrates src-layout packaging, structured data processing, streaming I/O,
 typed OOP design, custom exceptions, configuration, logging, validation and
-atomic export, and automated testing with coverage.
+atomic export, automated testing with coverage, and database persistence.
 
-The current entry point demonstrates the laboratory work 5 reliable file
-pipeline. Laboratory work 6 adds the automated pytest suite for the project.
+The current entry point demonstrates the laboratory work 7 SQLite persistence
+layer. Laboratory work 6 adds the automated pytest suite for the project.
 
 ## Requirements
 
@@ -67,6 +68,19 @@ tests/test_file_pipeline.py
 tests/conftest.py
 tests/unit/
 tests/integration/
+```
+
+## Laboratory 7 Files
+
+```text
+alembic.ini
+migrations/
+src/finance_tracker/database.py
+src/finance_tracker/db_models.py
+src/finance_tracker/db_repositories.py
+src/finance_tracker/db_services.py
+src/finance_tracker/dbapi.py
+tests/integration/test_database_persistence_pytest.py
 ```
 
 ## Author

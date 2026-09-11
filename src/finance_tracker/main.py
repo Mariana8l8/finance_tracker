@@ -3,6 +3,7 @@
 from itertools import chain, islice
 import logging
 from pathlib import Path
+from datetime import date
 from typing import cast
 
 from finance_tracker.analytics import (
@@ -14,6 +15,14 @@ from finance_tracker.analytics import (
 from finance_tracker.benchmark import benchmark_search
 from finance_tracker.config import load_config
 from finance_tracker.data import Transaction, transactions
+from finance_tracker.database import SessionLocal, create_schema, engine
+from finance_tracker.db_repositories import (
+    BudgetRepository,
+    CategoryRepository,
+    TransactionRepository,
+)
+from finance_tracker.db_services import transfer_between_budgets
+from finance_tracker.dbapi import find_transactions_by_category_dbapi
 from finance_tracker.exceptions import FinanceTrackerError
 from finance_tracker.file_exporters import JsonTransactionExporter
 from finance_tracker.file_pipeline import (
@@ -391,11 +400,82 @@ def run_lab5_demo() -> None:
     print("Tolerant mode:", policy_results["tolerant"])
 
 
+def run_lab7_demo() -> None:
+    """Run the SQLite persistence demo from laboratory work 7."""
+
+    print("\n=== LAB 7 SQLITE PERSISTENCE LAYER ===")
+    create_schema(engine)
+
+    with SessionLocal() as session:
+        budgets = BudgetRepository(session)
+        categories = CategoryRepository(session)
+        transactions = TransactionRepository(session)
+
+        main_budget = budgets.get_by_name("Main budget")
+        if main_budget is None:
+            main_budget = budgets.add("Main budget")
+        card_budget = budgets.get_by_name("Card budget")
+        if card_budget is None:
+            card_budget = budgets.add("Card budget")
+
+        salary = categories.find_by_name(main_budget.id, "Salary")
+        if salary is None:
+            salary = categories.add(main_budget.id, "Salary")
+        food = categories.find_by_name(main_budget.id, "Food")
+        if food is None:
+            food = categories.add(main_budget.id, "Food", 2_000.0)
+        transfer_out = categories.find_by_name(main_budget.id, "Transfer out")
+        if transfer_out is None:
+            transfer_out = categories.add(main_budget.id, "Transfer out")
+        transfer_in = categories.find_by_name(card_budget.id, "Transfer in")
+        if transfer_in is None:
+            transfer_in = categories.add(card_budget.id, "Transfer in")
+
+        if not transactions.list_for_budget(main_budget.id):
+            transactions.add(
+                budget_id=main_budget.id,
+                category_id=salary.id,
+                occurred_on=date(2026, 9, 1),
+                transaction_type="income",
+                amount=32_000.0,
+                description="Monthly salary",
+            )
+            transactions.add(
+                budget_id=main_budget.id,
+                category_id=food.id,
+                occurred_on=date(2026, 9, 3),
+                transaction_type="expense",
+                amount=1_850.5,
+                description="Groceries",
+            )
+
+        if not transactions.list_for_budget(card_budget.id):
+            transfer_between_budgets(
+                session,
+                source_budget_id=main_budget.id,
+                target_budget_id=card_budget.id,
+                source_category_id=transfer_out.id,
+                target_category_id=transfer_in.id,
+                amount=500.0,
+                occurred_on=date(2026, 9, 12),
+                description="Card top-up",
+            )
+
+        print("Budgets:", [budget.name for budget in budgets.list_all()])
+        print("Main transactions:", len(transactions.list_for_budget(main_budget.id)))
+        print("Main balance:", f"{transactions.balance(main_budget.id):.2f}")
+        print("Category counts:", transactions.count_by_category(main_budget.id))
+        print(
+            "DB-API Food transactions:",
+            find_transactions_by_category_dbapi(Path("data") / "finance_tracker.db", "Food"),
+        )
+
+
 def main() -> None:
     """Run the current laboratory demonstration."""
 
     try:
-        run_lab5_demo()
+        run_lab7_demo()
     except FinanceTrackerError as error:
         logging.getLogger(__name__).error("Application error: %s", error)
         raise SystemExit(1) from error

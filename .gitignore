@@ -12,5 +12,6 @@ build/
 .env
 data/*.csv
 data/*.txt
+data/*.db
 output/
 logs/

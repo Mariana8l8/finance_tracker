@@ -1,4 +1,4 @@
-"""Streaming readers and parsers for CSV task data."""
+"""Streaming readers and parsers for CSV finance data."""
 
 import csv
 from collections.abc import Iterable, Iterator
@@ -31,4 +31,3 @@ def read_all_rows_eager(
     with path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
         return list(reader)
-

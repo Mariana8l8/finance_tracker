@@ -1,181 +1,194 @@
-"""Processing functions for project task data."""
+"""Processing functions for structured finance data."""
 
 from collections import Counter, defaultdict, deque
 from collections.abc import Callable
 
-from finance_tracker.data import ACTIVE_STATUSES, PRIORITY_ORDER, Task
+from finance_tracker.data import EXPENSE_TYPES, TRANSACTION_TYPES, Transaction
 
 
-def get_unique_assignees(
-    items: list[Task],
+def get_unique_categories(
+    items: list[Transaction],
 ) -> set[str]:
-    """Return a set of unique task assignees."""
+    """Return unique transaction categories."""
 
     return {
-        str(task["assignee"])
-        for task in items
+        str(transaction["category"])
+        for transaction in items
     }
 
 
-def count_tasks_by_status(
-    items: list[Task],
+def count_transactions_by_type(
+    items: list[Transaction],
 ) -> Counter[str]:
-    """Count tasks by status using Counter."""
+    """Count transactions by income/expense type."""
 
     return Counter(
-        str(task["status"])
-        for task in items
+        str(transaction["type"])
+        for transaction in items
     )
 
 
-def count_tasks_by_priority(
-    items: list[Task],
+def count_transactions_by_category(
+    items: list[Transaction],
 ) -> Counter[str]:
-    """Count tasks by priority using Counter."""
+    """Count transactions by category."""
 
     return Counter(
-        str(task["priority"])
-        for task in items
+        str(transaction["category"])
+        for transaction in items
     )
 
 
-def get_unfinished_tasks(
-    items: list[Task],
-) -> list[Task]:
-    """Return tasks that are not completed yet."""
+def get_expense_transactions(
+    items: list[Transaction],
+) -> list[Transaction]:
+    """Return expense transactions."""
 
     return [
-        task
-        for task in items
-        if task["status"] in ACTIVE_STATUSES
+        transaction
+        for transaction in items
+        if transaction["type"] in EXPENSE_TYPES
     ]
 
 
-def group_tasks_by_assignee(
-    items: list[Task],
-) -> dict[str, list[Task]]:
-    """Group tasks by assignee using defaultdict."""
+def group_transactions_by_category(
+    items: list[Transaction],
+) -> dict[str, list[Transaction]]:
+    """Group transactions by category using defaultdict."""
 
-    grouped: defaultdict[str, list[Task]] = defaultdict(list)
+    grouped: defaultdict[str, list[Transaction]] = defaultdict(list)
 
-    for task in items:
-        grouped[str(task["assignee"])].append(task)
+    for transaction in items:
+        grouped[str(transaction["category"])].append(transaction)
 
     return dict(grouped)
 
 
-def group_tasks_by_assignee_and_status(
-    items: list[Task],
-) -> dict[str, dict[str, list[Task]]]:
-    """Create nested grouping by assignee and status."""
+def group_transactions_by_type_and_category(
+    items: list[Transaction],
+) -> dict[str, dict[str, list[Transaction]]]:
+    """Create nested grouping by type and category."""
 
-    grouped: defaultdict[str, defaultdict[str, list[Task]]] = defaultdict(
+    grouped: defaultdict[str, defaultdict[str, list[Transaction]]] = defaultdict(
         lambda: defaultdict(list),
     )
 
-    for task in items:
-        assignee = str(task["assignee"])
-        status = str(task["status"])
-        grouped[assignee][status].append(task)
+    for transaction in items:
+        transaction_type = str(transaction["type"])
+        category = str(transaction["category"])
+        grouped[transaction_type][category].append(transaction)
 
     return {
-        assignee: dict(statuses)
-        for assignee, statuses in grouped.items()
+        transaction_type: dict(categories)
+        for transaction_type, categories in grouped.items()
     }
 
 
-def create_task_index(
-    items: list[Task],
-) -> dict[int, Task]:
-    """Create a dictionary index by task ID."""
+def create_transaction_index(
+    items: list[Transaction],
+) -> dict[int, Transaction]:
+    """Create a dictionary index by transaction ID."""
 
     return {
-        int(task["id"]): task
-        for task in items
+        int(transaction["id"]): transaction
+        for transaction in items
     }
 
 
-def find_task_linear(
-    items: list[Task],
-    task_id: int,
-) -> Task | None:
-    """Find a task by ID using linear list search."""
+def find_transaction_linear(
+    items: list[Transaction],
+    transaction_id: int,
+) -> Transaction | None:
+    """Find a transaction by ID using linear list search."""
 
-    for task in items:
-        if task["id"] == task_id:
-            return task
+    for transaction in items:
+        if transaction["id"] == transaction_id:
+            return transaction
 
     return None
 
 
-def filter_tasks(
-    items: list[Task],
-    predicate: Callable[[Task], bool],
-) -> list[Task]:
-    """Filter tasks using a higher-order predicate function."""
+def filter_transactions(
+    items: list[Transaction],
+    predicate: Callable[[Transaction], bool],
+) -> list[Transaction]:
+    """Filter transactions using a higher-order predicate function."""
 
     return [
-        task
-        for task in items
-        if predicate(task)
+        transaction
+        for transaction in items
+        if predicate(transaction)
     ]
 
 
-def create_status_filter(
-    *allowed_statuses: str,
-) -> Callable[[Task], bool]:
-    """Create a closure that filters tasks by selected statuses."""
+def create_type_filter(
+    *allowed_types: str,
+) -> Callable[[Transaction], bool]:
+    """Create a closure that filters transactions by type."""
 
-    allowed = set(allowed_statuses)
+    allowed = set(allowed_types)
 
-    def predicate(task: Task) -> bool:
-        return str(task["status"]) in allowed
+    def predicate(transaction: Transaction) -> bool:
+        return str(transaction["type"]) in allowed
 
     return predicate
 
 
-def sort_tasks_by_priority(
-    items: list[Task],
-) -> list[Task]:
-    """Sort tasks by priority using a lambda key."""
+def sort_transactions_by_amount(
+    items: list[Transaction],
+    reverse: bool = True,
+) -> list[Transaction]:
+    """Sort transactions by amount using a lambda key."""
 
-    priority_rank = {
-        priority: index
-        for index, priority in enumerate(PRIORITY_ORDER)
+    return sorted(
+        items,
+        key=lambda transaction: float(transaction["amount"]),
+        reverse=reverse,
+    )
+
+
+def sort_transactions_by_type(
+    items: list[Transaction],
+) -> list[Transaction]:
+    """Sort transactions by the configured type order."""
+
+    type_rank = {
+        transaction_type: index
+        for index, transaction_type in enumerate(TRANSACTION_TYPES)
     }
 
     return sorted(
         items,
-        key=lambda task: priority_rank.get(str(task["priority"]), 999),
+        key=lambda transaction: type_rank.get(str(transaction["type"]), 999),
     )
 
 
-def calculate_total_tasks(
-    *groups: list[Task],
+def calculate_total_transactions(
+    *groups: list[Transaction],
 ) -> int:
-    """Calculate a total number of tasks from several task groups."""
+    """Calculate total number of transactions from several groups."""
 
     return sum(len(group) for group in groups)
 
 
-def create_task_record(
+def create_transaction_record(
     **fields: object,
-) -> Task:
-    """Create a task dictionary from keyword arguments."""
+) -> Transaction:
+    """Create a transaction dictionary from keyword arguments."""
 
     return dict(fields)
 
 
 def build_recent_history(
-    items: list[Task],
+    items: list[Transaction],
     limit: int = 3,
 ) -> deque[str]:
-    """Return titles of the latest tasks using deque."""
+    """Return descriptions of recent transactions using deque."""
 
     history: deque[str] = deque(maxlen=limit)
 
-    for task in items:
-        history.append(str(task["title"]))
+    for transaction in items:
+        history.append(str(transaction["description"]))
 
     return history
 

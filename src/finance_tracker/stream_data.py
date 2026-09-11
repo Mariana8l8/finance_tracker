@@ -4,25 +4,25 @@ import csv
 from pathlib import Path
 
 
-TASK_STREAM_PATH = Path("data") / "tasks_stream.csv"
+FINANCE_STREAM_PATH = Path("data") / "finance_transactions_stream.csv"
 DEFAULT_RECORD_COUNT = 120_000
 
-ASSIGNEES: tuple[str, ...] = (
-    "Maryana Roman",
-    "Oleh Koval",
-    "Iryna Bondar",
-    "Taras Novak",
-    "Sofia Melnyk",
+CATEGORIES: tuple[str, ...] = (
+    "Salary",
+    "Food",
+    "Transport",
+    "Education",
+    "Freelance",
+    "Health",
 )
-PRIORITIES: tuple[str, ...] = ("high", "medium", "low")
-STATUSES: tuple[str, ...] = ("todo", "in_progress", "review", "done")
+TRANSACTION_TYPES: tuple[str, ...] = ("income", "expense")
 
 
-def generate_task_csv(
+def generate_finance_csv(
     path: Path,
     count: int,
 ) -> None:
-    """Generate a deterministic CSV file with project tasks."""
+    """Generate a deterministic CSV file with financial transactions."""
 
     path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -30,36 +30,45 @@ def generate_task_csv(
         writer = csv.writer(file)
         writer.writerow(
             [
-                "task_id",
-                "title",
-                "assignee",
-                "priority",
-                "status",
+                "transaction_id",
+                "date",
+                "type",
+                "category",
+                "amount",
+                "description",
             ]
         )
 
-        for task_id in range(1, count + 1):
+        for transaction_id in range(1, count + 1):
+            category = CATEGORIES[transaction_id % len(CATEGORIES)]
+            transaction_type = (
+                "income"
+                if category in {"Salary", "Freelance"}
+                else "expense"
+            )
+            amount = 100 + (transaction_id % 5000)
             writer.writerow(
                 [
-                    task_id,
-                    f"Generated task {task_id}",
-                    ASSIGNEES[task_id % len(ASSIGNEES)],
-                    PRIORITIES[task_id % len(PRIORITIES)],
-                    STATUSES[task_id % len(STATUSES)],
+                    transaction_id,
+                    f"2026-09-{transaction_id % 28 + 1:02d}",
+                    transaction_type,
+                    category,
+                    f"{amount:.2f}",
+                    f"Generated transaction {transaction_id}",
                 ]
             )
 
-        writer.writerow(["invalid", "", "", "urgent", "unknown"])
+        writer.writerow(["invalid", "bad-date", "expense", "", "-10", "Invalid row"])
 
 
-def ensure_task_csv(
-    path: Path = TASK_STREAM_PATH,
+def ensure_finance_csv(
+    path: Path = FINANCE_STREAM_PATH,
     count: int = DEFAULT_RECORD_COUNT,
 ) -> Path:
     """Create the dataset when it does not exist yet."""
 
     if not path.exists():
-        generate_task_csv(path, count)
+        generate_finance_csv(path, count)
 
     return path
 

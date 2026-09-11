@@ -4,39 +4,39 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from finance_tracker.stream_filters import (
-    filter_by_assignee,
-    filter_by_priority,
-    filter_by_status,
-    normalize_tasks,
-    validate_tasks,
+    filter_by_amount_threshold,
+    filter_by_category,
+    filter_by_type,
+    normalize_transactions,
+    validate_transactions,
 )
-from finance_tracker.stream_models import TaskRecord
+from finance_tracker.stream_models import TransactionRecord
 from finance_tracker.stream_readers import parse_csv_rows, read_lines
 
 
-def build_task_pipeline(
+def build_finance_pipeline(
     path: Path,
-    statuses: set[str] | None = None,
-    priorities: set[str] | None = None,
-    assignee: str | None = None,
-) -> Iterator[TaskRecord]:
-    """Build a lazy CSV processing pipeline for task records."""
+    transaction_types: set[str] | None = None,
+    category: str | None = None,
+    minimum_amount: float | None = None,
+) -> Iterator[TransactionRecord]:
+    """Build a lazy CSV processing pipeline for finance records."""
 
     lines = read_lines(path)
     rows = parse_csv_rows(lines)
-    valid = validate_tasks(rows)
-    normalized = normalize_tasks(valid)
+    valid = validate_transactions(rows)
+    normalized = normalize_transactions(valid)
 
-    current: Iterator[TaskRecord] = normalized
+    current: Iterator[TransactionRecord] = normalized
 
-    if statuses is not None:
-        current = filter_by_status(current, statuses)
+    if transaction_types is not None:
+        current = filter_by_type(current, transaction_types)
 
-    if priorities is not None:
-        current = filter_by_priority(current, priorities)
+    if category is not None:
+        current = filter_by_category(current, category)
 
-    if assignee is not None:
-        current = filter_by_assignee(current, assignee)
+    if minimum_amount is not None:
+        current = filter_by_amount_threshold(current, minimum_amount)
 
     return current
 

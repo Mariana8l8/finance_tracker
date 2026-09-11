@@ -1,54 +1,86 @@
-"""Analytics functions for project task data."""
+"""Analytics functions for structured finance data."""
 
-from collections import Counter
+from collections import Counter, defaultdict
 
-from finance_tracker.data import Task
+from finance_tracker.data import Transaction
 from finance_tracker.decorators import measure_time
 from finance_tracker.processors import (
-    count_tasks_by_priority,
-    count_tasks_by_status,
-    get_unfinished_tasks,
-    get_unique_assignees,
+    count_transactions_by_category,
+    count_transactions_by_type,
+    get_expense_transactions,
+    get_unique_categories,
 )
 
 
-@measure_time("summary generation")
-def build_summary(
-    items: list[Task],
-) -> dict[str, object]:
-    """Build a compact summary for the project task dataset."""
+def calculate_total_by_type(
+    items: list[Transaction],
+    transaction_type: str,
+) -> float:
+    """Calculate total amount for a selected transaction type."""
 
-    status_counter = count_tasks_by_status(items)
-    priority_counter = count_tasks_by_priority(items)
+    return sum(
+        float(transaction["amount"])
+        for transaction in items
+        if transaction["type"] == transaction_type
+    )
+
+
+def calculate_expenses_by_category(
+    items: list[Transaction],
+) -> dict[str, float]:
+    """Aggregate expenses by category."""
+
+    result: defaultdict[str, float] = defaultdict(float)
+
+    for transaction in get_expense_transactions(items):
+        result[str(transaction["category"])] += float(transaction["amount"])
+
+    return dict(result)
+
+
+@measure_time("finance summary generation")
+def build_summary(
+    items: list[Transaction],
+) -> dict[str, object]:
+    """Build a compact summary for the finance dataset."""
+
+    income = calculate_total_by_type(items, "income")
+    expenses = calculate_total_by_type(items, "expense")
 
     return {
-        "total_tasks": len(items),
-        "unique_assignees": len(get_unique_assignees(items)),
-        "unfinished_tasks": len(get_unfinished_tasks(items)),
-        "status_counter": status_counter,
-        "priority_counter": priority_counter,
+        "total_transactions": len(items),
+        "unique_categories": len(get_unique_categories(items)),
+        "income": income,
+        "expenses": expenses,
+        "balance": income - expenses,
+        "type_counter": count_transactions_by_type(items),
+        "category_counter": count_transactions_by_category(items),
     }
 
 
-def rank_assignees_by_task_count(
-    items: list[Task],
+def rank_categories_by_expenses(
+    items: list[Transaction],
+) -> list[tuple[str, float]]:
+    """Return expense categories ranked by total amount."""
+
+    return sorted(
+        calculate_expenses_by_category(items).items(),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+
+
+def rank_categories_by_count(
+    items: list[Transaction],
 ) -> list[tuple[str, int]]:
-    """Return assignees ranked by number of assigned tasks."""
+    """Return categories ranked by number of transactions."""
 
     counter = Counter(
-        str(task["assignee"])
-        for task in items
+        str(transaction["category"])
+        for transaction in items
     )
 
     return counter.most_common()
-
-
-def rank_priorities(
-    items: list[Task],
-) -> list[tuple[str, int]]:
-    """Return priorities ranked by task count."""
-
-    return count_tasks_by_priority(items).most_common()
 
 
 def get_complexity_notes() -> list[tuple[str, str]]:
@@ -59,6 +91,6 @@ def get_complexity_notes() -> list[tuple[str, str]]:
         ("Build dict index", "O(n)"),
         ("Average dict lookup by key", "O(1)"),
         ("Average set membership check", "O(1)"),
-        ("Sorting tasks by priority", "O(n log n)"),
+        ("Sorting transactions by amount", "O(n log n)"),
     ]
 

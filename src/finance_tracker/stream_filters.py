@@ -1,90 +1,90 @@
-"""Validation, filtering and transformation stages for task streams."""
+"""Validation, filtering and transformation stages for finance streams."""
 
 from collections.abc import Iterable, Iterator
 
-from finance_tracker.stream_models import TaskRecord
+from finance_tracker.stream_models import TransactionRecord
 
-VALID_PRIORITIES = {"high", "medium", "low"}
-VALID_STATUSES = {"todo", "in_progress", "review", "done"}
-UNFINISHED_STATUSES = {"todo", "in_progress", "review"}
+VALID_TYPES = {"income", "expense"}
 
 
-def validate_tasks(
+def validate_transactions(
     rows: Iterable[dict[str, str]],
-) -> Iterator[TaskRecord]:
-    """Validate raw CSV rows and yield TaskRecord objects."""
+) -> Iterator[TransactionRecord]:
+    """Validate raw CSV rows and yield TransactionRecord objects."""
 
     for row in rows:
         try:
-            task_id = int(row["task_id"])
-            title = row["title"].strip()
-            assignee = row["assignee"].strip()
-            priority = row["priority"].strip()
-            status = row["status"].strip()
+            transaction_id = int(row["transaction_id"])
+            date = row["date"].strip()
+            transaction_type = row["type"].strip()
+            category = row["category"].strip()
+            amount = float(row["amount"])
+            description = row["description"].strip()
         except (KeyError, TypeError, ValueError):
             continue
 
-        if task_id <= 0:
+        if transaction_id <= 0:
             continue
-        if not title or not assignee:
+        if not date or not category or not description:
             continue
-        if priority not in VALID_PRIORITIES:
+        if transaction_type not in VALID_TYPES:
             continue
-        if status not in VALID_STATUSES:
+        if amount <= 0:
             continue
 
-        yield TaskRecord(
-            task_id=task_id,
-            title=title,
-            assignee=assignee,
-            priority=priority,
-            status=status,
+        yield TransactionRecord(
+            transaction_id=transaction_id,
+            date=date,
+            transaction_type=transaction_type,
+            category=category,
+            amount=amount,
+            description=description,
         )
 
 
-def filter_by_status(
-    records: Iterable[TaskRecord],
-    allowed_statuses: set[str],
-) -> Iterator[TaskRecord]:
-    """Yield records with selected statuses."""
+def filter_by_type(
+    records: Iterable[TransactionRecord],
+    allowed_types: set[str],
+) -> Iterator[TransactionRecord]:
+    """Yield records with selected transaction types."""
 
     for record in records:
-        if record.status in allowed_statuses:
+        if record.transaction_type in allowed_types:
             yield record
 
 
-def filter_by_priority(
-    records: Iterable[TaskRecord],
-    allowed_priorities: set[str],
-) -> Iterator[TaskRecord]:
-    """Yield records with selected priorities."""
+def filter_by_category(
+    records: Iterable[TransactionRecord],
+    category: str,
+) -> Iterator[TransactionRecord]:
+    """Lazy category filter."""
+
+    normalized = category.casefold()
 
     for record in records:
-        if record.priority in allowed_priorities:
+        if record.category.casefold() == normalized:
             yield record
 
 
-def filter_by_assignee(
-    records: Iterable[TaskRecord],
-    assignee: str,
-) -> Iterator[TaskRecord]:
-    """Lazy assignee filter."""
-
-    normalized = assignee.casefold()
+def filter_by_amount_threshold(
+    records: Iterable[TransactionRecord],
+    minimum_amount: float,
+) -> Iterator[TransactionRecord]:
+    """Yield transactions with amount greater than or equal to threshold."""
 
     for record in records:
-        if record.assignee.casefold() == normalized:
+        if record.amount >= minimum_amount:
             yield record
 
 
-def normalize_tasks(
-    records: Iterable[TaskRecord],
-) -> Iterator[TaskRecord]:
-    """Normalize title and assignee text lazily."""
+def normalize_transactions(
+    records: Iterable[TransactionRecord],
+) -> Iterator[TransactionRecord]:
+    """Normalize category and description text lazily."""
 
     for record in records:
         yield record._replace(
-            title=record.title.strip().title(),
-            assignee=record.assignee.strip(),
+            category=record.category.strip().title(),
+            description=record.description.strip(),
         )
 

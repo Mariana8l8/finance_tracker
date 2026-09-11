@@ -1,4 +1,4 @@
-"""Streaming analytics and experiments for task pipelines."""
+"""Streaming analytics and experiments for finance pipelines."""
 
 from collections import Counter
 from collections.abc import Iterable
@@ -8,101 +8,110 @@ from pathlib import Path
 from time import perf_counter
 import tracemalloc
 
-from finance_tracker.stream_filters import UNFINISHED_STATUSES, validate_tasks
-from finance_tracker.stream_models import TaskRecord
-from finance_tracker.stream_pipeline import build_task_pipeline
+from finance_tracker.stream_filters import validate_transactions
+from finance_tracker.stream_models import TransactionRecord
+from finance_tracker.stream_pipeline import build_finance_pipeline
 from finance_tracker.stream_readers import parse_csv_rows, read_all_rows_eager, read_lines
 
 
-def calculate_task_statistics(
-    records: Iterable[TaskRecord],
+def calculate_finance_statistics(
+    records: Iterable[TransactionRecord],
 ) -> dict[str, object]:
-    """Aggregate task statistics without materializing the whole stream."""
+    """Aggregate finance statistics without materializing the whole stream."""
 
     total = 0
-    status_counter: Counter[str] = Counter()
-    priority_counter: Counter[str] = Counter()
-    assignee_counter: Counter[str] = Counter()
+    income = 0.0
+    expenses = 0.0
+    type_counter: Counter[str] = Counter()
+    category_counter: Counter[str] = Counter()
 
     for record in records:
         total += 1
-        status_counter[record.status] += 1
-        priority_counter[record.priority] += 1
-        assignee_counter[record.assignee] += 1
+        type_counter[record.transaction_type] += 1
+        category_counter[record.category] += 1
+
+        if record.transaction_type == "income":
+            income += record.amount
+        else:
+            expenses += record.amount
 
     return {
         "total": total,
-        "status_counter": status_counter,
-        "priority_counter": priority_counter,
-        "assignee_counter": assignee_counter,
+        "income": income,
+        "expenses": expenses,
+        "balance": income - expenses,
+        "type_counter": type_counter,
+        "category_counter": category_counter,
     }
 
 
-def first_unfinished_tasks(
-    records: Iterable[TaskRecord],
+def first_expenses(
+    records: Iterable[TransactionRecord],
     limit: int,
-) -> list[TaskRecord]:
-    """Return the first N unfinished tasks using islice."""
+) -> list[TransactionRecord]:
+    """Return the first N expenses using islice."""
 
-    unfinished = (
+    expenses = (
         record
         for record in records
-        if record.status in UNFINISHED_STATUSES
+        if record.transaction_type == "expense"
     )
-    return list(islice(unfinished, limit))
+    return list(islice(expenses, limit))
 
 
-def group_tasks_after_sorting(
-    records: Iterable[TaskRecord],
+def group_transactions_after_sorting(
+    records: Iterable[TransactionRecord],
 ) -> list[tuple[str, int]]:
-    """Group tasks by assignee after sorting for itertools.groupby."""
+    """Group transactions by category after sorting for itertools.groupby."""
 
-    sorted_records = sorted(records, key=attrgetter("assignee"))
+    sorted_records = sorted(records, key=attrgetter("category"))
     return [
-        (assignee, sum(1 for _ in group))
-        for assignee, group in groupby(
+        (category, sum(1 for _ in group))
+        for category, group in groupby(
             sorted_records,
-            key=attrgetter("assignee"),
+            key=attrgetter("category"),
         )
     ]
 
 
-def cumulative_done_counts(
-    records: Iterable[TaskRecord],
+def cumulative_balance(
+    records: Iterable[TransactionRecord],
     limit: int = 8,
-) -> list[int]:
-    """Use accumulate to count completed tasks cumulatively."""
+) -> list[float]:
+    """Use accumulate to calculate running balance."""
 
-    done_flags = (
-        1 if record.status == "done" else 0
+    signed_amounts = (
+        record.amount
+        if record.transaction_type == "income"
+        else -record.amount
         for record in records
     )
     return list(
         islice(
-            accumulate(done_flags),
+            accumulate(signed_amounts),
             limit,
         )
     )
 
 
-def pairwise_task_id_gaps(
-    records: Iterable[TaskRecord],
+def pairwise_amount_changes(
+    records: Iterable[TransactionRecord],
     limit: int = 5,
-) -> list[int]:
-    """Use pairwise to calculate gaps between neighboring task IDs."""
+) -> list[float]:
+    """Use pairwise to calculate changes between neighboring amounts."""
 
-    task_ids = (
-        record.task_id
+    amounts = (
+        record.amount
         for record in records
     )
-    gaps = (
+    changes = (
         current - previous
-        for previous, current in pairwise(task_ids)
+        for previous, current in pairwise(amounts)
     )
-    return list(islice(gaps, limit))
+    return list(islice(changes, limit))
 
 
-def infinite_task_numbers(
+def infinite_transaction_numbers(
     limit: int,
 ) -> list[int]:
     """Demonstrate an infinite iterator safely limited by islice."""
@@ -131,7 +140,7 @@ def consume_eager(
     """Eagerly read all rows, then validate them."""
 
     rows = read_all_rows_eager(path)
-    return sum(1 for _ in validate_tasks(rows))
+    return sum(1 for _ in validate_transactions(rows))
 
 
 def consume_lazy(
@@ -140,19 +149,19 @@ def consume_lazy(
     """Consume the lazy validation pipeline."""
 
     rows = parse_csv_rows(read_lines(path))
-    return sum(1 for _ in validate_tasks(rows))
+    return sum(1 for _ in validate_transactions(rows))
 
 
 def time_to_first_result(
     path: Path,
 ) -> float:
-    """Measure how quickly the first valid unfinished high-priority task appears."""
+    """Measure how quickly the first valid large expense appears."""
 
     started = perf_counter()
-    pipeline = build_task_pipeline(
+    pipeline = build_finance_pipeline(
         path,
-        statuses={"todo", "in_progress", "review"},
-        priorities={"high"},
+        transaction_types={"expense"},
+        minimum_amount=1000.0,
     )
     next(pipeline, None)
     return perf_counter() - started

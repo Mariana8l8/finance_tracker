@@ -1,49 +1,50 @@
-"""Models for laboratory work 3 streaming task processing."""
+"""Models for laboratory work 3 streaming finance processing."""
 
 from typing import NamedTuple
 
 
-class TaskRecord(NamedTuple):
-    """Validated project task record from the CSV stream."""
+class TransactionRecord(NamedTuple):
+    """Validated financial transaction record from the CSV stream."""
 
-    task_id: int
-    title: str
-    assignee: str
-    priority: str
-    status: str
+    transaction_id: int
+    date: str
+    transaction_type: str
+    category: str
+    amount: float
+    description: str
 
 
-class PriorityIterator:
-    """A small custom iterator over project priorities."""
+class TransactionTypeIterator:
+    """A small custom iterator over transaction types."""
 
     def __init__(
         self,
-        priorities: tuple[str, ...],
+        transaction_types: tuple[str, ...],
     ) -> None:
-        self._priorities = priorities
+        self._transaction_types = transaction_types
         self._index = 0
 
-    def __iter__(self) -> "PriorityIterator":
+    def __iter__(self) -> "TransactionTypeIterator":
         return self
 
     def __next__(self) -> str:
-        if self._index >= len(self._priorities):
+        if self._index >= len(self._transaction_types):
             raise StopIteration
 
-        value = self._priorities[self._index]
+        value = self._transaction_types[self._index]
         self._index += 1
         return value
 
 
-class PriorityIterable:
-    """Iterable that returns a fresh priority iterator each time."""
+class TransactionTypeIterable:
+    """Iterable that returns a fresh transaction type iterator each time."""
 
     def __init__(
         self,
-        priorities: tuple[str, ...],
+        transaction_types: tuple[str, ...],
     ) -> None:
-        self._priorities = priorities
+        self._transaction_types = transaction_types
 
-    def __iter__(self) -> PriorityIterator:
-        return PriorityIterator(self._priorities)
+    def __iter__(self) -> TransactionTypeIterator:
+        return TransactionTypeIterator(self._transaction_types)
 

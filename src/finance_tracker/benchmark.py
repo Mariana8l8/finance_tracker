@@ -2,27 +2,28 @@
 
 from time import perf_counter
 
-from finance_tracker.data import Task
-from finance_tracker.processors import create_task_index, find_task_linear
+from finance_tracker.data import Transaction
+from finance_tracker.processors import create_transaction_index, find_transaction_linear
 
 
-def generate_tasks(
+def generate_transactions(
     count: int,
-) -> list[Task]:
-    """Generate synthetic tasks for a search benchmark."""
+) -> list[Transaction]:
+    """Generate synthetic transactions for a search benchmark."""
 
-    priorities = ("high", "medium", "low")
-    statuses = ("todo", "in_progress", "review", "done")
+    categories = ("Salary", "Food", "Transport", "Education", "Freelance")
+    transaction_types = ("income", "expense")
 
     return [
         {
-            "id": task_id,
-            "title": f"Generated task {task_id}",
-            "assignee": f"User {task_id % 10}",
-            "priority": priorities[task_id % len(priorities)],
-            "status": statuses[task_id % len(statuses)],
+            "id": transaction_id,
+            "date": "2026-09-01",
+            "category": categories[transaction_id % len(categories)],
+            "amount": float(100 + transaction_id % 5000),
+            "type": transaction_types[transaction_id % len(transaction_types)],
+            "description": f"Generated transaction {transaction_id}",
         }
-        for task_id in range(1, count + 1)
+        for transaction_id in range(1, count + 1)
     ]
 
 
@@ -34,15 +35,15 @@ def benchmark_search(
     results: list[dict[str, float]] = []
 
     for size in sizes:
-        items = generate_tasks(size)
+        items = generate_transactions(size)
         target_id = size
 
         start = perf_counter()
-        find_task_linear(items, target_id)
+        find_transaction_linear(items, target_id)
         list_time = perf_counter() - start
 
         index_start = perf_counter()
-        index = create_task_index(items)
+        index = create_transaction_index(items)
         index_build_time = perf_counter() - index_start
 
         lookup_start = perf_counter()

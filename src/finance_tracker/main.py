@@ -1,63 +1,62 @@
-"""Console entry point for laboratory work 3."""
+"""Console entry point for the finance tracker laboratory project."""
 
 from itertools import chain, islice
 
 from finance_tracker.analytics import (
     build_summary,
     get_complexity_notes,
-    rank_assignees_by_task_count,
-    rank_priorities,
+    rank_categories_by_count,
+    rank_categories_by_expenses,
 )
 from finance_tracker.benchmark import benchmark_search
-from finance_tracker.data import Task, tasks
+from finance_tracker.data import Transaction, transactions
 from finance_tracker.processors import (
     build_recent_history,
-    calculate_total_tasks,
-    count_tasks_by_priority,
-    count_tasks_by_status,
-    create_status_filter,
-    create_task_index,
-    create_task_record,
-    filter_tasks,
-    get_unfinished_tasks,
-    get_unique_assignees,
-    group_tasks_by_assignee,
-    group_tasks_by_assignee_and_status,
-    sort_tasks_by_priority,
+    calculate_total_transactions,
+    count_transactions_by_category,
+    count_transactions_by_type,
+    create_transaction_index,
+    create_transaction_record,
+    create_type_filter,
+    filter_transactions,
+    get_expense_transactions,
+    get_unique_categories,
+    group_transactions_by_category,
+    group_transactions_by_type_and_category,
+    sort_transactions_by_amount,
 )
 from finance_tracker.stream_analytics import (
-    calculate_task_statistics,
-    cumulative_done_counts,
-    first_unfinished_tasks,
-    group_tasks_after_sorting,
-    infinite_task_numbers,
-    pairwise_task_id_gaps,
+    calculate_finance_statistics,
+    cumulative_balance,
+    first_expenses,
+    group_transactions_after_sorting,
+    infinite_transaction_numbers,
+    pairwise_amount_changes,
     run_eager_lazy_experiment,
 )
-from finance_tracker.stream_batches import batched_tasks
-from finance_tracker.stream_data import DEFAULT_RECORD_COUNT, ensure_task_csv
-from finance_tracker.stream_filters import UNFINISHED_STATUSES
-from finance_tracker.stream_models import PriorityIterable, TaskRecord
-from finance_tracker.stream_pipeline import build_task_pipeline
+from finance_tracker.stream_batches import batched_transactions
+from finance_tracker.stream_data import DEFAULT_RECORD_COUNT, ensure_finance_csv
+from finance_tracker.stream_models import TransactionRecord, TransactionTypeIterable
+from finance_tracker.stream_pipeline import build_finance_pipeline
 
 
-def print_tasks(
+def print_transactions(
     title: str,
-    items: list[Task],
+    items: list[Transaction],
 ) -> None:
-    """Print task dictionaries as a table."""
+    """Print transaction dictionaries as a table."""
 
     print(f"\n{title}")
-    print(f"{'ID':>3}  {'Title':35} {'Assignee':16} {'Priority':8} {'Status':12}")
-    print("-" * 84)
+    print(f"{'ID':>3}  {'Date':12} {'Category':14} {'Type':8} {'Amount':>10}")
+    print("-" * 55)
 
-    for task in items:
+    for transaction in items:
         print(
-            f"{int(task['id']):>3}  "
-            f"{str(task['title'])[:35]:35} "
-            f"{str(task['assignee'])[:16]:16} "
-            f"{str(task['priority']):8} "
-            f"{str(task['status']):12}"
+            f"{int(transaction['id']):>3}  "
+            f"{str(transaction['date']):12} "
+            f"{str(transaction['category'])[:14]:14} "
+            f"{str(transaction['type']):8} "
+            f"{float(transaction['amount']):10.2f}"
         )
 
 
@@ -69,7 +68,7 @@ def print_counter(
 
     print(f"\n{title}")
     for key, value in counter.items():
-        print(f"{key:12} {value}")
+        print(f"{key:14} {value}")
 
 
 def print_benchmark() -> None:
@@ -88,147 +87,150 @@ def print_benchmark() -> None:
         )
 
 
-def print_stream_tasks(
+def print_stream_transactions(
     title: str,
-    items: list[TaskRecord],
+    items: list[TransactionRecord],
 ) -> None:
-    """Print streamed task records as a compact table."""
+    """Print streamed transaction records as a compact table."""
 
     print(f"\n{title}")
-    print(f"{'ID':>6}  {'Title':28} {'Assignee':16} {'Priority':8} {'Status':12}")
-    print("-" * 78)
+    print(f"{'ID':>6}  {'Date':12} {'Category':14} {'Type':8} {'Amount':>10}")
+    print("-" * 60)
 
-    for task in items:
+    for transaction in items:
         print(
-            f"{task.task_id:>6}  "
-            f"{task.title[:28]:28} "
-            f"{task.assignee[:16]:16} "
-            f"{task.priority:8} "
-            f"{task.status:12}"
+            f"{transaction.transaction_id:>6}  "
+            f"{transaction.date:12} "
+            f"{transaction.category[:14]:14} "
+            f"{transaction.transaction_type:8} "
+            f"{transaction.amount:10.2f}"
         )
 
 
 def run_lab2_demo() -> None:
-    """Run the task data analysis demo from laboratory work 2."""
+    """Run the structured finance data analysis demo from laboratory work 2."""
 
-    print("\n=== LAB 2 DATA ANALYSIS SNAPSHOT ===")
-    print_tasks(
-        "ALL PROJECT TASKS",
-        tasks,
+    print("\n=== LAB 2 FINANCE DATA ANALYSIS SNAPSHOT ===")
+    print_transactions(
+        "ALL TRANSACTIONS",
+        transactions,
     )
 
-    print("\nUnique assignees:", get_unique_assignees(tasks))
-    print_counter("TASKS BY STATUS", count_tasks_by_status(tasks))
-    print_counter("TASKS BY PRIORITY", count_tasks_by_priority(tasks))
+    print("\nUnique categories:", get_unique_categories(transactions))
+    print_counter("TRANSACTIONS BY TYPE", count_transactions_by_type(transactions))
+    print_counter("TRANSACTIONS BY CATEGORY", count_transactions_by_category(transactions))
 
-    print_tasks(
-        "UNFINISHED TASKS",
-        get_unfinished_tasks(tasks),
+    print_transactions(
+        "EXPENSE TRANSACTIONS",
+        get_expense_transactions(transactions),
     )
 
-    grouped = group_tasks_by_assignee(tasks)
-    print("\nGROUPED BY ASSIGNEE")
-    for assignee, assigned_tasks in grouped.items():
-        print(f"{assignee:16} {len(assigned_tasks)}")
+    grouped = group_transactions_by_category(transactions)
+    print("\nGROUPED BY CATEGORY")
+    for category, category_transactions in grouped.items():
+        print(f"{category:14} {len(category_transactions)}")
 
-    nested = group_tasks_by_assignee_and_status(tasks)
+    nested = group_transactions_by_type_and_category(transactions)
     print("\nNESTED GROUPING")
-    for assignee, statuses in nested.items():
+    for transaction_type, categories in nested.items():
         compact = {
-            status: len(status_tasks)
-            for status, status_tasks in statuses.items()
+            category: len(category_transactions)
+            for category, category_transactions in categories.items()
         }
-        print(f"{assignee:16} {compact}")
+        print(f"{transaction_type:8} {compact}")
 
-    index = create_task_index(tasks)
+    index = create_transaction_index(transactions)
     print("\nSearch by ID:", index.get(4))
 
-    is_active = create_status_filter("todo", "in_progress", "review")
-    active_tasks = filter_tasks(tasks, is_active)
-    print()
-    print_tasks(
+    is_expense = create_type_filter("expense")
+    expense_transactions = filter_transactions(transactions, is_expense)
+    print_transactions(
         "FILTERED BY CLOSURE",
-        active_tasks,
+        expense_transactions,
     )
 
-    print_tasks(
-        "SORTED BY PRIORITY",
-        sort_tasks_by_priority(tasks),
+    print_transactions(
+        "SORTED BY AMOUNT",
+        sort_transactions_by_amount(transactions),
     )
 
-    created_task = create_task_record(
+    created_transaction = create_transaction_record(
         id=8,
-        title="Created with kwargs",
-        assignee="Oleh Koval",
-        priority="medium",
-        status="todo",
+        date="2026-09-13",
+        category="Food",
+        amount=420.0,
+        type="expense",
+        description="Created with kwargs",
     )
-    print("\nCreated via **kwargs:", created_task)
-    print("Total via *args:", calculate_total_tasks(tasks, active_tasks))
-    print("Recent history via deque:", list(build_recent_history(tasks)))
-    print("Assignee rating:", rank_assignees_by_task_count(tasks))
-    print("Priority rating:", rank_priorities(tasks))
-    print("Summary:", build_summary(tasks))
+    print("\nCreated via **kwargs:", created_transaction)
+    print("Total via *args:", calculate_total_transactions(transactions, expense_transactions))
+    print("Recent history via deque:", list(build_recent_history(transactions)))
+    print("Expense category rating:", rank_categories_by_expenses(transactions))
+    print("Category count rating:", rank_categories_by_count(transactions))
+    print("Summary:", build_summary(transactions))
 
     print("\nCOMPLEXITY NOTES")
     for operation, complexity in get_complexity_notes():
-        print(f"{operation:30} {complexity}")
+        print(f"{operation:35} {complexity}")
 
     print_benchmark()
 
 
 def run_lab3_demo() -> None:
-    """Run the streaming pipeline demo from laboratory work 3."""
+    """Run the streaming finance pipeline demo from laboratory work 3."""
 
-    print("\n=== LAB 3 STREAMING PIPELINE ===")
-    path = ensure_task_csv(count=DEFAULT_RECORD_COUNT)
+    print("\n=== LAB 3 FINANCE STREAMING PIPELINE ===")
+    path = ensure_finance_csv(count=DEFAULT_RECORD_COUNT)
     print(f"Dataset: {path} ({DEFAULT_RECORD_COUNT} generated records + 1 invalid row)")
 
-    priorities = PriorityIterable(("high", "medium", "low"))
-    print("Custom iterator priorities:", list(priorities))
-    print("Custom iterator reused:", list(priorities))
+    transaction_types = TransactionTypeIterable(("income", "expense"))
+    print("Custom iterator types:", list(transaction_types))
+    print("Custom iterator reused:", list(transaction_types))
 
-    pipeline = build_task_pipeline(
+    pipeline = build_finance_pipeline(
         path,
-        statuses=UNFINISHED_STATUSES,
-        priorities={"high"},
+        transaction_types={"expense"},
+        minimum_amount=1000.0,
     )
-    first_tasks = list(islice(pipeline, 5))
-    print_stream_tasks("FIRST 5 UNFINISHED HIGH-PRIORITY TASKS", first_tasks)
+    first_large_expenses = list(islice(pipeline, 5))
+    print_stream_transactions("FIRST 5 LARGE EXPENSES", first_large_expenses)
 
-    assignee_pipeline = build_task_pipeline(
+    category_pipeline = build_finance_pipeline(
         path,
-        assignee="Maryana Roman",
+        category="Food",
     )
-    print_stream_tasks(
-        "LAZY ASSIGNEE FILTER",
-        list(islice(assignee_pipeline, 3)),
+    print_stream_transactions(
+        "LAZY CATEGORY FILTER",
+        list(islice(category_pipeline, 3)),
     )
 
     chained = chain(
-        build_task_pipeline(path, statuses={"todo"}),
-        build_task_pipeline(path, statuses={"review"}),
+        build_finance_pipeline(path, transaction_types={"income"}),
+        build_finance_pipeline(path, transaction_types={"expense"}),
     )
-    print_stream_tasks(
-        "CHAINED TODO + REVIEW STREAM",
+    print_stream_transactions(
+        "CHAINED INCOME + EXPENSE STREAM",
         list(islice(chained, 4)),
     )
 
-    batch_pipeline = build_task_pipeline(path, statuses=UNFINISHED_STATUSES)
-    first_batch = next(batched_tasks(batch_pipeline, batch_size=4))
-    print_stream_tasks("FIRST BATCH", first_batch)
+    batch_pipeline = build_finance_pipeline(path, transaction_types={"expense"})
+    first_batch = next(batched_transactions(batch_pipeline, batch_size=4))
+    print_stream_transactions("FIRST EXPENSE BATCH", first_batch)
 
-    stats = calculate_task_statistics(build_task_pipeline(path))
+    stats = calculate_finance_statistics(build_finance_pipeline(path))
     print("\nSTREAMING STATISTICS")
     print("Total valid records:", stats["total"])
-    print("Status counter:", stats["status_counter"])
-    print("Priority counter:", stats["priority_counter"])
+    print("Income:", f"{stats['income']:.2f}")
+    print("Expenses:", f"{stats['expenses']:.2f}")
+    print("Balance:", f"{stats['balance']:.2f}")
+    print("Type counter:", stats["type_counter"])
+    print("Category counter:", stats["category_counter"])
 
-    print("First unfinished:", first_unfinished_tasks(build_task_pipeline(path), 3))
-    print("Grouped after sorting:", group_tasks_after_sorting(islice(build_task_pipeline(path), 30)))
-    print("Cumulative done counts:", cumulative_done_counts(build_task_pipeline(path), 8))
-    print("Pairwise task ID gaps:", pairwise_task_id_gaps(build_task_pipeline(path), 5))
-    print("Infinite count limited by islice:", infinite_task_numbers(10))
+    print("First expenses:", first_expenses(build_finance_pipeline(path), 3))
+    print("Grouped after sorting:", group_transactions_after_sorting(islice(build_finance_pipeline(path), 30)))
+    print("Cumulative balance:", cumulative_balance(build_finance_pipeline(path), 8))
+    print("Pairwise amount changes:", pairwise_amount_changes(build_finance_pipeline(path), 5))
+    print("Infinite count limited by islice:", infinite_transaction_numbers(10))
 
     experiment = run_eager_lazy_experiment(path)
     print("\nEAGER VS LAZY EXPERIMENT")
@@ -249,3 +251,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

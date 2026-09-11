@@ -1,59 +1,66 @@
-"""Structured demo data for laboratory work 2."""
+"""Structured finance data for laboratory work 2."""
 
-Task = dict[str, object]
+Transaction = dict[str, object]
 
-PRIORITY_ORDER: tuple[str, ...] = ("high", "medium", "low")
-ACTIVE_STATUSES: set[str] = {"todo", "in_progress", "review"}
+TRANSACTION_TYPES: tuple[str, ...] = ("income", "expense")
+EXPENSE_TYPES: set[str] = {"expense"}
 
-tasks: list[Task] = [
+transactions: list[Transaction] = [
     {
         "id": 1,
-        "title": "Create project structure",
-        "assignee": "Maryana Roman",
-        "priority": "high",
-        "status": "done",
+        "date": "2026-09-01",
+        "category": "Salary",
+        "amount": 32000.00,
+        "type": "income",
+        "description": "Monthly salary",
     },
     {
         "id": 2,
-        "title": "Implement finance operation model",
-        "assignee": "Maryana Roman",
-        "priority": "high",
-        "status": "done",
+        "date": "2026-09-03",
+        "category": "Food",
+        "amount": 1850.50,
+        "type": "expense",
+        "description": "Groceries",
     },
     {
         "id": 3,
-        "title": "Prepare README documentation",
-        "assignee": "Oleh Koval",
-        "priority": "medium",
-        "status": "review",
+        "date": "2026-09-05",
+        "category": "Transport",
+        "amount": 620.00,
+        "type": "expense",
+        "description": "Public transport",
     },
     {
         "id": 4,
-        "title": "Add unit tests",
-        "assignee": "Iryna Bondar",
-        "priority": "high",
-        "status": "in_progress",
+        "date": "2026-09-07",
+        "category": "Freelance",
+        "amount": 7600.00,
+        "type": "income",
+        "description": "Landing page project",
     },
     {
         "id": 5,
-        "title": "Create benchmark dataset",
-        "assignee": "Oleh Koval",
-        "priority": "low",
-        "status": "todo",
+        "date": "2026-09-09",
+        "category": "Food",
+        "amount": 980.25,
+        "type": "expense",
+        "description": "Lunch and household items",
     },
     {
         "id": 6,
-        "title": "Generate laboratory report",
-        "assignee": "Maryana Roman",
-        "priority": "medium",
-        "status": "todo",
+        "date": "2026-09-11",
+        "category": "Education",
+        "amount": 2100.00,
+        "type": "expense",
+        "description": "Courses and books",
     },
     {
         "id": 7,
-        "title": "Review project statistics",
-        "assignee": "Iryna Bondar",
-        "priority": "low",
-        "status": "done",
+        "date": "2026-09-12",
+        "category": "Bonus",
+        "amount": 4500.00,
+        "type": "income",
+        "description": "Project bonus",
     },
 ]
 

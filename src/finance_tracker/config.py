@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from typing import Mapping
 
 from finance_tracker.exceptions import ConfigurationError
+
+
+DEFAULT_CONFIG_PATH = Path("config") / "lab5_config.yaml"
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,6 +98,17 @@ def load_config(
     )
     validate_config(config)
     return config
+
+
+def get_config_path(
+    env_var: str = "FINANCE_TRACKER_CONFIG",
+) -> Path:
+    """Return config path from environment or the default project path."""
+
+    value = os.getenv(env_var)
+    if value is None or not value.strip():
+        return DEFAULT_CONFIG_PATH
+    return Path(value)
 
 
 def validate_config(

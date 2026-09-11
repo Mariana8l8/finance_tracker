@@ -9,16 +9,17 @@ Variant 12 uses one cross-lab domain: finance tracker.
 - Laboratory work 3: streaming transaction processing.
 - Laboratory work 4: professional typed OOP domain model.
 - Laboratory work 5: reliable CSV import, YAML configuration, logging and JSON export.
+- Laboratory work 6: pytest test suite, mocks, tmp_path, monkeypatch and coverage.
 
 ## Description
 
 Console application for finance tracking laboratory works. The project
 demonstrates src-layout packaging, structured data processing, streaming I/O,
 typed OOP design, custom exceptions, configuration, logging, validation and
-atomic export.
+atomic export, and automated testing with coverage.
 
 The current entry point demonstrates the laboratory work 5 reliable file
-pipeline.
+pipeline. Laboratory work 6 adds the automated pytest suite for the project.
 
 ## Requirements
 
@@ -47,6 +48,7 @@ finance-tracker
 
 ```bash
 python -m unittest discover -s tests
+python -m pytest --cov=finance_tracker --cov-branch --cov-report=term-missing
 python -m mypy src
 ```
 
@@ -62,6 +64,9 @@ src/finance_tracker/file_utils.py
 src/finance_tracker/file_pipeline.py
 src/finance_tracker/file_exporters.py
 tests/test_file_pipeline.py
+tests/conftest.py
+tests/unit/
+tests/integration/
 ```
 
 ## Author

@@ -1,11 +1,12 @@
 """Streaming analytics and experiments for finance pipelines."""
 
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from itertools import accumulate, count, groupby, islice, pairwise
 from operator import attrgetter
 from pathlib import Path
 from time import perf_counter
+from typing import cast
 import tracemalloc
 
 from finance_tracker.stream_filters import validate_transactions
@@ -120,8 +121,8 @@ def infinite_transaction_numbers(
 
 
 def measure_peak_memory(
-    function,
-    *args,
+    function: Callable[..., object],
+    *args: object,
 ) -> tuple[object, int, float]:
     """Measure function result, peak memory and elapsed time."""
 
@@ -182,12 +183,11 @@ def run_eager_lazy_experiment(
     )
 
     return {
-        "eager_count": float(eager_count),
-        "lazy_count": float(lazy_count),
+        "eager_count": float(cast(int, eager_count)),
+        "lazy_count": float(cast(int, lazy_count)),
         "eager_time": eager_time,
         "lazy_time": lazy_time,
         "eager_peak_mb": eager_peak / 1024 / 1024,
         "lazy_peak_mb": lazy_peak / 1024 / 1024,
         "time_to_first_result": time_to_first_result(path),
     }
-

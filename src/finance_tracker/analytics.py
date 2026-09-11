@@ -1,6 +1,7 @@
 """Analytics functions for structured finance data."""
 
 from collections import Counter, defaultdict
+from typing import cast
 
 from finance_tracker.data import Transaction
 from finance_tracker.decorators import measure_time
@@ -19,7 +20,7 @@ def calculate_total_by_type(
     """Calculate total amount for a selected transaction type."""
 
     return sum(
-        float(transaction["amount"])
+        cast(float, transaction["amount"])
         for transaction in items
         if transaction["type"] == transaction_type
     )
@@ -33,7 +34,7 @@ def calculate_expenses_by_category(
     result: defaultdict[str, float] = defaultdict(float)
 
     for transaction in get_expense_transactions(items):
-        result[str(transaction["category"])] += float(transaction["amount"])
+        result[str(transaction["category"])] += cast(float, transaction["amount"])
 
     return dict(result)
 
@@ -93,4 +94,3 @@ def get_complexity_notes() -> list[tuple[str, str]]:
         ("Average set membership check", "O(1)"),
         ("Sorting transactions by amount", "O(n log n)"),
     ]
-

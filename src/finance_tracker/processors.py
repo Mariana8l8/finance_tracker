@@ -2,6 +2,7 @@
 
 from collections import Counter, defaultdict, deque
 from collections.abc import Callable
+from typing import cast
 
 from finance_tracker.data import EXPENSE_TYPES, TRANSACTION_TYPES, Transaction
 
@@ -90,7 +91,7 @@ def create_transaction_index(
     """Create a dictionary index by transaction ID."""
 
     return {
-        int(transaction["id"]): transaction
+        cast(int, transaction["id"]): transaction
         for transaction in items
     }
 
@@ -142,7 +143,7 @@ def sort_transactions_by_amount(
 
     return sorted(
         items,
-        key=lambda transaction: float(transaction["amount"]),
+        key=lambda transaction: cast(float, transaction["amount"]),
         reverse=reverse,
     )
 
@@ -191,4 +192,3 @@ def build_recent_history(
         history.append(str(transaction["description"]))
 
     return history
-

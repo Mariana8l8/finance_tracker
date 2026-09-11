@@ -1,6 +1,7 @@
 """Console entry point for the finance tracker laboratory project."""
 
 from itertools import chain, islice
+from typing import cast
 
 from finance_tracker.analytics import (
     build_summary,
@@ -38,6 +39,16 @@ from finance_tracker.stream_batches import batched_transactions
 from finance_tracker.stream_data import DEFAULT_RECORD_COUNT, ensure_finance_csv
 from finance_tracker.stream_models import TransactionRecord, TransactionTypeIterable
 from finance_tracker.stream_pipeline import build_finance_pipeline
+from finance_tracker.domain import Budget, Category
+from finance_tracker.oop_services import (
+    ConsoleNotifier,
+    FinanceTrackerService,
+    JsonBudgetExporter,
+)
+from finance_tracker.policies import CategoryLimitAlertPolicy
+from finance_tracker.protocols import BudgetExporter
+from finance_tracker.repositories import InMemoryRepository
+from finance_tracker.value_objects import Money
 
 
 def print_transactions(
@@ -52,11 +63,11 @@ def print_transactions(
 
     for transaction in items:
         print(
-            f"{int(transaction['id']):>3}  "
+            f"{cast(int, transaction['id']):>3}  "
             f"{str(transaction['date']):12} "
             f"{str(transaction['category'])[:14]:14} "
             f"{str(transaction['type']):8} "
-            f"{float(transaction['amount']):10.2f}"
+            f"{cast(float, transaction['amount']):10.2f}"
         )
 
 
@@ -243,12 +254,84 @@ def run_lab3_demo() -> None:
     print(f"Time to first result: {experiment['time_to_first_result']:.6f} s")
 
 
+def run_lab4_demo() -> None:
+    """Run the professional OOP finance tracker demo from laboratory work 4."""
+
+    print("\n=== LAB 4 OOP FINANCE TRACKER MODEL ===")
+    repository: InMemoryRepository[Budget] = InMemoryRepository()
+    exporter = JsonBudgetExporter()
+    notifier = ConsoleNotifier()
+    alert_policy = CategoryLimitAlertPolicy()
+
+    print("Exporter matches protocol:", isinstance(exporter, BudgetExporter))
+
+    service = FinanceTrackerService(
+        budget_repository=repository,
+        exporter=exporter,
+        notifier=notifier,
+        alert_policy=alert_policy,
+    )
+
+    budget = service.create_budget(
+        budget_id=1,
+        name="September budget",
+    )
+    food = Category("Food")
+    budget.set_category_limit(
+        food,
+        Money(2_000.00),
+    )
+
+    service.add_transaction(
+        budget_id=1,
+        payload={
+            "id": 1,
+            "date": "2026-09-01",
+            "type": "income",
+            "category": "Salary",
+            "amount": 32_000.00,
+            "description": "Monthly salary",
+        },
+        recipient="maryana@example.com",
+    )
+    service.add_transaction(
+        budget_id=1,
+        payload={
+            "id": 2,
+            "date": "2026-09-03",
+            "type": "expense",
+            "category": "Food",
+            "amount": 1_850.50,
+            "description": "Groceries",
+        },
+        recipient="maryana@example.com",
+    )
+    service.add_transaction(
+        budget_id=1,
+        payload={
+            "id": 3,
+            "date": "2026-09-09",
+            "type": "expense",
+            "category": "Food",
+            "amount": 980.25,
+            "description": "Lunch and household items",
+        },
+        recipient="maryana@example.com",
+    )
+
+    print("Transactions:", len(budget))
+    print("Transaction 2 exists:", 2 in budget)
+    print("Transaction 2:", budget[2])
+    print("Food spent:", budget.spent_by_category(food))
+    print("Balance:", budget.balance)
+    print("Export:", service.export_budget(1))
+
+
 def main() -> None:
     """Run the current laboratory demonstration."""
 
-    run_lab3_demo()
+    run_lab4_demo()
 
 
 if __name__ == "__main__":
     main()
-

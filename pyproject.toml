@@ -9,8 +9,17 @@ description = "Financial tracker laboratory project"
 readme = "README.md"
 requires-python = ">=3.11"
 
+[project.optional-dependencies]
+dev = ["mypy>=1.10"]
+
 [project.scripts]
 finance-tracker = "finance_tracker.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+warn_return_any = true

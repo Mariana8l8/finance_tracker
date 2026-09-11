@@ -7,6 +7,7 @@
 - Лабораторна робота №1: фінансовий трекер.
 - Лабораторна робота №2: аналіз фінансових транзакцій.
 - Лабораторна робота №3: потокова обробка фінансових транзакцій.
+- Лабораторна робота №4: професійна ООП-модель фінансового трекера.
 
 ## Description
 
@@ -14,6 +15,7 @@ Console application for laboratory works in Professional Python.
 The project demonstrates src-layout, data models, business logic,
 structured finance data processing, type hints, tests and a command-line entry point.
 The current entry point demonstrates the laboratory work 3 streaming pipeline.
+The current entry point demonstrates the laboratory work 4 OOP domain model.
 
 ## Requirements
 
@@ -61,10 +63,18 @@ src/finance_tracker/stream_filters.py
 src/finance_tracker/stream_batches.py
 src/finance_tracker/stream_pipeline.py
 src/finance_tracker/stream_analytics.py
+src/finance_tracker/value_objects.py
+src/finance_tracker/domain.py
+src/finance_tracker/protocols.py
+src/finance_tracker/repositories.py
+src/finance_tracker/dto.py
+src/finance_tracker/policies.py
+src/finance_tracker/oop_services.py
 src/finance_tracker/main.py
 tests/test_services.py
 tests/test_finance_analysis.py
 tests/test_stream_pipeline.py
+tests/test_oop_domain.py
 ```
 
 ## Author

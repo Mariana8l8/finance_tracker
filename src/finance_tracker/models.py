@@ -33,4 +33,3 @@ class Operation:
         if self.operation_type == "income":
             return self.amount
         return -self.amount
-

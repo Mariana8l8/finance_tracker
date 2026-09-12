@@ -144,10 +144,7 @@ class Budget:
     def balance(self) -> SignedMoney:
         """Calculate current budget balance."""
 
-        total = sum(
-            transaction.signed_amount.amount
-            for transaction in self._transactions
-        )
+        total = sum(transaction.signed_amount.amount for transaction in self._transactions)
         return SignedMoney(total, self.currency)
 
     def spent_by_category(
@@ -184,10 +181,7 @@ class Budget:
         self,
         transaction_id: int,
     ) -> bool:
-        return any(
-            transaction.id == transaction_id
-            for transaction in self._transactions
-        )
+        return any(transaction.id == transaction_id for transaction in self._transactions)
 
     def __getitem__(
         self,
@@ -197,4 +191,3 @@ class Budget:
             if transaction.id == transaction_id:
                 return transaction
         raise KeyError(transaction_id)
-

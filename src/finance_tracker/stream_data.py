@@ -41,11 +41,7 @@ def generate_finance_csv(
 
         for transaction_id in range(1, count + 1):
             category = CATEGORIES[transaction_id % len(CATEGORIES)]
-            transaction_type = (
-                "income"
-                if category in {"Salary", "Freelance"}
-                else "expense"
-            )
+            transaction_type = "income" if category in {"Salary", "Freelance"} else "expense"
             amount = 100 + (transaction_id % 5000)
             writer.writerow(
                 [
@@ -71,4 +67,3 @@ def ensure_finance_csv(
         generate_finance_csv(path, count)
 
     return path
-

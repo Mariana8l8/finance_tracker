@@ -143,4 +143,3 @@ def transaction_from_payload(
         amount=amount,
         description=description,
     )
-

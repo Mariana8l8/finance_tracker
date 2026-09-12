@@ -26,4 +26,3 @@ class CategoryLimitAlertPolicy(BudgetAlertPolicy):
         category: Category,
     ) -> bool:
         return budget.is_limit_exceeded(category)
-

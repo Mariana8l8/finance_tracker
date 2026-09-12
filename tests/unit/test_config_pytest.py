@@ -4,7 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from finance_tracker.config import DEFAULT_CONFIG_PATH, get_config_path, load_config
+from finance_tracker.config import (
+    DEFAULT_CONFIG_PATH,
+    DEFAULT_DATABASE_URL,
+    get_config_path,
+    get_settings,
+    load_config,
+)
 from finance_tracker.exceptions import ConfigurationError
 
 
@@ -53,6 +59,37 @@ def test_get_config_path_falls_back_to_default(
     monkeypatch.delenv("FINANCE_TRACKER_CONFIG", raising=False)
 
     assert get_config_path() == DEFAULT_CONFIG_PATH
+
+
+def test_get_settings_uses_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    get_settings.cache_clear()
+    monkeypatch.setenv("FINANCE_TRACKER_APP_NAME", "Test Finance API")
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+    monkeypatch.setenv("LOG_LEVEL", "debug")
+
+    settings = get_settings()
+
+    assert settings.app_name == "Test Finance API"
+    assert settings.environment == "test"
+    assert settings.database_url == "sqlite:///:memory:"
+    assert settings.log_level == "DEBUG"
+    get_settings.cache_clear()
+
+
+def test_get_settings_uses_safe_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    get_settings.cache_clear()
+    monkeypatch.delenv("FINANCE_TRACKER_APP_NAME", raising=False)
+    monkeypatch.delenv("APP_ENV", raising=False)
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.delenv("LOG_LEVEL", raising=False)
+
+    settings = get_settings()
+
+    assert settings.environment == "development"
+    assert settings.database_url == DEFAULT_DATABASE_URL
+    assert settings.log_level == "INFO"
+    get_settings.cache_clear()
 
 
 def test_load_config_resolves_relative_paths(tmp_path: Path) -> None:

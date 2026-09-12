@@ -76,10 +76,7 @@ def rank_categories_by_count(
 ) -> list[tuple[str, int]]:
     """Return categories ranked by number of transactions."""
 
-    counter = Counter(
-        str(transaction["category"])
-        for transaction in items
-    )
+    counter = Counter(str(transaction["category"]) for transaction in items)
 
     return counter.most_common()
 

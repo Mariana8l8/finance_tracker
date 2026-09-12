@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 import os
 from pathlib import Path
 from typing import Mapping
@@ -54,6 +55,20 @@ class AppConfig:
     output: OutputConfig
     processing: ProcessingConfig
     logging: LoggingConfig
+
+
+@dataclass(frozen=True, slots=True)
+class ProductionSettings:
+    """Environment-driven settings for production-oriented runs."""
+
+    app_name: str
+    environment: str
+    database_url: str
+    log_level: str
+
+
+DEFAULT_DATABASE_URL = "sqlite:///data/finance_tracker.db"
+DEFAULT_APP_NAME = "Finance Tracker API"
 
 
 YamlValue = str | int | float | bool
@@ -109,6 +124,18 @@ def get_config_path(
     if value is None or not value.strip():
         return DEFAULT_CONFIG_PATH
     return Path(value)
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> ProductionSettings:
+    """Load production-oriented settings from environment variables."""
+
+    return ProductionSettings(
+        app_name=_env("FINANCE_TRACKER_APP_NAME", DEFAULT_APP_NAME),
+        environment=_env("APP_ENV", "development"),
+        database_url=_env("DATABASE_URL", DEFAULT_DATABASE_URL),
+        log_level=_env("LOG_LEVEL", "INFO").upper(),
+    )
 
 
 def validate_config(
@@ -178,11 +205,7 @@ def _parse_scalar(
 ) -> YamlValue:
     if value.lower() in {"true", "false"}:
         return value.lower() == "true"
-    if (
-        len(value) >= 2
-        and value[0] == value[-1]
-        and value.startswith(("'", '"'))
-    ):
+    if len(value) >= 2 and value[0] == value[-1] and value.startswith(("'", '"')):
         return value[1:-1]
     try:
         return int(value)
@@ -192,6 +215,16 @@ def _parse_scalar(
         return float(value)
     except ValueError:
         return value
+
+
+def _env(
+    name: str,
+    default: str,
+) -> str:
+    value = os.getenv(name)
+    if value is None or not value.strip():
+        return default
+    return value.strip()
 
 
 def _section(
@@ -255,11 +288,7 @@ def _required_set(
     key: str,
 ) -> frozenset[str]:
     raw_value = _required_str(document, section, key)
-    return frozenset(
-        item.strip()
-        for item in raw_value.split(",")
-        if item.strip()
-    )
+    return frozenset(item.strip() for item in raw_value.split(",") if item.strip())
 
 
 def _resolve_path(

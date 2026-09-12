@@ -262,7 +262,10 @@ def run_lab3_demo() -> None:
     print("Category counter:", stats["category_counter"])
 
     print("First expenses:", first_expenses(build_finance_pipeline(path), 3))
-    print("Grouped after sorting:", group_transactions_after_sorting(islice(build_finance_pipeline(path), 30)))
+    print(
+        "Grouped after sorting:",
+        group_transactions_after_sorting(islice(build_finance_pipeline(path), 30)),
+    )
     print("Cumulative balance:", cumulative_balance(build_finance_pipeline(path), 8))
     print("Pairwise amount changes:", pairwise_amount_changes(build_finance_pipeline(path), 5))
     print("Infinite count limited by islice:", infinite_transaction_numbers(10))

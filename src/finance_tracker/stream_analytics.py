@@ -52,11 +52,7 @@ def first_expenses(
 ) -> list[TransactionRecord]:
     """Return the first N expenses using islice."""
 
-    expenses = (
-        record
-        for record in records
-        if record.transaction_type == "expense"
-    )
+    expenses = (record for record in records if record.transaction_type == "expense")
     return list(islice(expenses, limit))
 
 
@@ -82,9 +78,7 @@ def cumulative_balance(
     """Use accumulate to calculate running balance."""
 
     signed_amounts = (
-        record.amount
-        if record.transaction_type == "income"
-        else -record.amount
+        record.amount if record.transaction_type == "income" else -record.amount
         for record in records
     )
     return list(
@@ -101,14 +95,8 @@ def pairwise_amount_changes(
 ) -> list[float]:
     """Use pairwise to calculate changes between neighboring amounts."""
 
-    amounts = (
-        record.amount
-        for record in records
-    )
-    changes = (
-        current - previous
-        for previous, current in pairwise(amounts)
-    )
+    amounts = (record.amount for record in records)
+    changes = (current - previous for previous, current in pairwise(amounts))
     return list(islice(changes, limit))
 
 

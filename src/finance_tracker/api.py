@@ -11,8 +11,10 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from finance_tracker import __version__
+from finance_tracker.config import get_settings
 from finance_tracker.database import SessionLocal, create_schema, engine
-from finance_tracker.db_models import TransactionRecordORM
+from finance_tracker.db_models import BudgetRecord, CategoryRecord, TransactionRecordORM
 from finance_tracker.db_repositories import (
     BudgetRepository,
     CategoryRepository,
@@ -34,8 +36,8 @@ from finance_tracker.schemas import (
 
 
 app = FastAPI(
-    title="Finance Tracker API",
-    version="0.8.0",
+    title=get_settings().app_name,
+    version=__version__,
 )
 
 
@@ -60,14 +62,17 @@ def get_session() -> Generator[Session, None, None]:
 
 @app.get("/health", tags=["system"])
 async def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "environment": get_settings().environment,
+    }
 
 
 @app.get("/budgets", response_model=list[BudgetResponse], tags=["budgets"])
 async def list_budgets(
     currency: str | None = Query(default=None, min_length=3, max_length=3),
     session: Session = Depends(get_session),
-) -> list[object]:
+) -> list[BudgetRecord]:
     budgets = BudgetRepository(session).list_all()
     if currency is not None:
         return [budget for budget in budgets if budget.currency == currency]
@@ -165,7 +170,7 @@ async def create_category(
 async def list_categories(
     budget_id: int,
     session: Session = Depends(get_session),
-) -> list[object]:
+) -> list[CategoryRecord]:
     _require_budget(session, budget_id)
     return CategoryRepository(session).list_for_budget(budget_id)
 
@@ -210,7 +215,7 @@ async def list_transactions(
     transaction_type: str | None = Query(default=None, pattern="^(income|expense)$"),
     category_id: int | None = Query(default=None, gt=0),
     session: Session = Depends(get_session),
-) -> list[object]:
+) -> list[TransactionRecordORM]:
     _require_budget(session, budget_id)
     repository = TransactionRepository(session)
     transactions = repository.list_for_budget(budget_id)
@@ -222,9 +227,7 @@ async def list_transactions(
         ]
     if category_id is not None:
         transactions = [
-            transaction
-            for transaction in transactions
-            if transaction.category_id == category_id
+            transaction for transaction in transactions if transaction.category_id == category_id
         ]
     return transactions
 

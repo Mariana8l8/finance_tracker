@@ -31,6 +31,5 @@ def find_transactions_by_category_dbapi(
                 (category_name,),
             )
             return [
-                (int(row[0]), str(row[1]), float(row[2]), str(row[3]))
-                for row in cursor.fetchall()
+                (int(row[0]), str(row[1]), float(row[2]), str(row[3])) for row in cursor.fetchall()
             ]

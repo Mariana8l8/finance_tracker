@@ -216,11 +216,7 @@ def generate_large_csv(
         writer.writerow(REQUIRED_COLUMNS)
         for transaction_id in range(1, count + 1):
             category = categories[transaction_id % len(categories)]
-            transaction_type = (
-                "income"
-                if category in {"Salary", "Freelance"}
-                else "expense"
-            )
+            transaction_type = "income" if category in {"Salary", "Freelance"} else "expense"
             writer.writerow(
                 [
                     transaction_id,

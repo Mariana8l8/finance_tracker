@@ -63,4 +63,3 @@ transactions: list[Transaction] = [
         "description": "Project bonus",
     },
 ]
-

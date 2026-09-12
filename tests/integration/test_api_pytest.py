@@ -49,7 +49,8 @@ def test_health_endpoint(api_client: TestClient) -> None:
     response = api_client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json()["status"] == "ok"
+    assert "environment" in response.json()
 
 
 def test_budget_category_transaction_crud(api_client: TestClient) -> None:
@@ -171,7 +172,7 @@ def test_external_httpx_helper_with_asgi_transport(api_session: Session) -> None
         app.dependency_overrides.clear()
 
         assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+        assert response.json()["status"] == "ok"
 
     asyncio.run(run())
 

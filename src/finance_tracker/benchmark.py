@@ -60,4 +60,3 @@ def benchmark_search(
         )
 
     return results
-

@@ -87,4 +87,3 @@ def normalize_transactions(
             category=record.category.strip().title(),
             description=record.description.strip(),
         )
-

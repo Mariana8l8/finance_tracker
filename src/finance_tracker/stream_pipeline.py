@@ -39,4 +39,3 @@ def build_finance_pipeline(
         current = filter_by_amount_threshold(current, minimum_amount)
 
     return current
-

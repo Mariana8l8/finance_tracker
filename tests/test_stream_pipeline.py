@@ -38,7 +38,9 @@ class TestStreamPipeline(TestCase):
             statistics = calculate_finance_statistics(build_finance_pipeline(path))
 
             self.assertTrue(filtered)
-            self.assertTrue(all(transaction.transaction_type == "expense" for transaction in filtered))
+            self.assertTrue(
+                all(transaction.transaction_type == "expense" for transaction in filtered)
+            )
             self.assertTrue(all(transaction.amount >= 100.0 for transaction in filtered))
             self.assertEqual(statistics["total"], 20)
 

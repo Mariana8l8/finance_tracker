@@ -19,11 +19,7 @@ def calculate_income(
 ) -> float:
     """Calculate total income."""
 
-    return sum(
-        operation.amount
-        for operation in operations
-        if operation.operation_type == "income"
-    )
+    return sum(operation.amount for operation in operations if operation.operation_type == "income")
 
 
 def calculate_expenses(
@@ -32,9 +28,7 @@ def calculate_expenses(
     """Calculate total expenses."""
 
     return sum(
-        operation.amount
-        for operation in operations
-        if operation.operation_type == "expense"
+        operation.amount for operation in operations if operation.operation_type == "expense"
     )
 
 
@@ -80,4 +74,3 @@ def sort_by_date(
     """Return operations sorted by date."""
 
     return sorted(operations, key=lambda operation: operation.date)
-

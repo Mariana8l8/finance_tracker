@@ -25,4 +25,3 @@ def batched_transactions(
             return
 
         yield batch
-

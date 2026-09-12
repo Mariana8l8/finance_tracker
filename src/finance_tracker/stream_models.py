@@ -47,4 +47,3 @@ class TransactionTypeIterable:
 
     def __iter__(self) -> TransactionTypeIterator:
         return TransactionTypeIterator(self._transaction_types)
-

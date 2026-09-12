@@ -96,8 +96,7 @@ def test_import_transactions_filters_by_minimum_amount(
     create_csv = transaction_csv_factory
     assert callable(create_csv)
     path = create_csv(
-        "1,2026-09-12,expense,Food,10.00,Small\n"
-        "2,2026-09-12,expense,Food,100.00,Large\n"
+        "1,2026-09-12,expense,Food,10.00,Small\n2,2026-09-12,expense,Food,100.00,Large\n"
     )
     statistics = ImportStatistics()
 

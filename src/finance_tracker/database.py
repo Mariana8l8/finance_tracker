@@ -9,11 +9,12 @@ from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import NullPool
 
+from finance_tracker.config import get_settings
 from finance_tracker.db_models import Base
 
 
 DATABASE_PATH = Path("data") / "finance_tracker.db"
-DATABASE_URL = f"sqlite:///{DATABASE_PATH.as_posix()}"
+DATABASE_URL = get_settings().database_url
 
 
 def create_sqlite_engine(
@@ -54,7 +55,7 @@ def create_schema(
 ) -> None:
     """Create all finance tracker tables."""
 
-    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _ensure_sqlite_parent(target_engine)
     Base.metadata.create_all(target_engine)
 
 
@@ -70,3 +71,17 @@ def session_scope() -> Session:
     """Create a Session for simple application scripts."""
 
     return SessionLocal()
+
+
+def _ensure_sqlite_parent(
+    target_engine: Engine,
+) -> None:
+    database_url = str(target_engine.url)
+    if not database_url.startswith("sqlite:///"):
+        return
+
+    path_value = database_url.removeprefix("sqlite:///")
+    if path_value == ":memory:":
+        return
+
+    Path(path_value).parent.mkdir(parents=True, exist_ok=True)

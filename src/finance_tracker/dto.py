@@ -12,4 +12,3 @@ class TransactionPayload(TypedDict):
     category: str
     amount: float
     description: NotRequired[str]
-

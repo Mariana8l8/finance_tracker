@@ -12,10 +12,7 @@ def get_unique_categories(
 ) -> set[str]:
     """Return unique transaction categories."""
 
-    return {
-        str(transaction["category"])
-        for transaction in items
-    }
+    return {str(transaction["category"]) for transaction in items}
 
 
 def count_transactions_by_type(
@@ -23,10 +20,7 @@ def count_transactions_by_type(
 ) -> Counter[str]:
     """Count transactions by income/expense type."""
 
-    return Counter(
-        str(transaction["type"])
-        for transaction in items
-    )
+    return Counter(str(transaction["type"]) for transaction in items)
 
 
 def count_transactions_by_category(
@@ -34,10 +28,7 @@ def count_transactions_by_category(
 ) -> Counter[str]:
     """Count transactions by category."""
 
-    return Counter(
-        str(transaction["category"])
-        for transaction in items
-    )
+    return Counter(str(transaction["category"]) for transaction in items)
 
 
 def get_expense_transactions(
@@ -45,11 +36,7 @@ def get_expense_transactions(
 ) -> list[Transaction]:
     """Return expense transactions."""
 
-    return [
-        transaction
-        for transaction in items
-        if transaction["type"] in EXPENSE_TYPES
-    ]
+    return [transaction for transaction in items if transaction["type"] in EXPENSE_TYPES]
 
 
 def group_transactions_by_category(
@@ -79,10 +66,7 @@ def group_transactions_by_type_and_category(
         category = str(transaction["category"])
         grouped[transaction_type][category].append(transaction)
 
-    return {
-        transaction_type: dict(categories)
-        for transaction_type, categories in grouped.items()
-    }
+    return {transaction_type: dict(categories) for transaction_type, categories in grouped.items()}
 
 
 def create_transaction_index(
@@ -90,10 +74,7 @@ def create_transaction_index(
 ) -> dict[int, Transaction]:
     """Create a dictionary index by transaction ID."""
 
-    return {
-        cast(int, transaction["id"]): transaction
-        for transaction in items
-    }
+    return {cast(int, transaction["id"]): transaction for transaction in items}
 
 
 def find_transaction_linear(
@@ -115,11 +96,7 @@ def filter_transactions(
 ) -> list[Transaction]:
     """Filter transactions using a higher-order predicate function."""
 
-    return [
-        transaction
-        for transaction in items
-        if predicate(transaction)
-    ]
+    return [transaction for transaction in items if predicate(transaction)]
 
 
 def create_type_filter(
@@ -154,8 +131,7 @@ def sort_transactions_by_type(
     """Sort transactions by the configured type order."""
 
     type_rank = {
-        transaction_type: index
-        for index, transaction_type in enumerate(TRANSACTION_TYPES)
+        transaction_type: index for index, transaction_type in enumerate(TRANSACTION_TYPES)
     }
 
     return sorted(

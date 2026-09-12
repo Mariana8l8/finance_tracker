@@ -71,4 +71,3 @@ class SignedMoney:
 
     def __str__(self) -> str:
         return f"{self.amount:.2f} {self.currency}"
-

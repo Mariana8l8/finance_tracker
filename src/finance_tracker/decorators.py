@@ -27,4 +27,3 @@ def measure_time(
         return wrapper
 
     return decorator
-

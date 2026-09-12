@@ -1,6 +1,6 @@
 # Finance Tracker
 
-Laboratory project for the Professional Python course.
+Production-oriented laboratory project for the Professional Python course.
 
 Variant 12 uses one cross-lab domain: finance tracker.
 
@@ -13,20 +13,33 @@ Variant 12 uses one cross-lab domain: finance tracker.
 - Laboratory work 7: SQLite persistence layer, SQLAlchemy ORM, migrations and repositories.
 - Laboratory work 8: FastAPI REST API, Pydantic schemas, async tasks and HTTPX.
 - Laboratory work 9: performance profiling, concurrency, multiprocessing, NumPy and caching.
+- Laboratory work 10: packaging, environment configuration, Docker, CI/CD and release readiness.
 
 ## Description
 
-Console application for finance tracking laboratory works. The project
-demonstrates src-layout packaging, structured data processing, streaming I/O,
-typed OOP design, custom exceptions, configuration, logging, validation and
-atomic export, automated testing with coverage, and database persistence.
+Finance Tracker is a typed Python project that evolved from a console finance
+tracker into a FastAPI REST API with SQLite persistence, file import/export,
+automated tests, profiling benchmarks, Docker support and GitHub Actions CI.
 
-The current entry point demonstrates the laboratory work 7 SQLite persistence
-layer. Laboratory work 8 exposes the persistence layer through a FastAPI REST API.
+The API exposes budgets, categories, transactions and summary statistics. The
+project keeps configuration in environment variables and does not store secrets
+in source code.
+
+## Features
+
+- src-layout installable Python package.
+- FastAPI REST API with OpenAPI docs at `/docs`.
+- SQLite persistence through SQLAlchemy repositories.
+- CSV import and JSON export pipeline.
+- Async HTTPX helpers.
+- Performance benchmarks with Python loops, threads, processes, NumPy and caching.
+- Pytest, mypy, Ruff, package build and Docker build in CI.
 
 ## Requirements
 
 Python 3.11+
+
+For Docker runs, Docker Engine is required.
 
 ## Installation
 
@@ -35,7 +48,27 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 ```
 
-## Run
+## Configuration
+
+Copy the example environment file for local changes:
+
+```bash
+cp .env.example .env
+```
+
+Supported environment variables:
+
+```text
+FINANCE_TRACKER_APP_NAME=Finance Tracker API
+APP_ENV=development
+DATABASE_URL=sqlite:///data/finance_tracker.db
+LOG_LEVEL=INFO
+```
+
+Do not commit `.env` or real secrets. The tracked `.env.example` contains only
+safe placeholder values.
+
+## Run Console Demo
 
 ```bash
 python -m finance_tracker.main
@@ -47,13 +80,109 @@ or:
 finance-tracker
 ```
 
+## Run API
+
+```bash
+uvicorn finance_tracker.api:app --reload
+```
+
+Useful endpoints:
+
+```text
+GET /health
+GET /budgets
+POST /budgets
+GET /budgets/{budget_id}/transactions
+GET /budgets/{budget_id}/summary
+```
+
+API docs:
+
+```text
+http://127.0.0.1:8000/docs
+http://127.0.0.1:8000/redoc
+http://127.0.0.1:8000/openapi.json
+```
+
 ## Tests
 
 ```bash
-python -m unittest discover -s tests
-python -m pytest --cov=finance_tracker --cov-branch --cov-report=term-missing
+ruff check .
+ruff format --check .
 python -m mypy src
+python -m pytest --cov=finance_tracker --cov-branch --cov-report=term-missing
 ```
+
+## Package Build
+
+```bash
+python -m build
+```
+
+Expected artifacts:
+
+```text
+dist/finance_tracker-1.0.0-py3-none-any.whl
+dist/finance_tracker-1.0.0.tar.gz
+```
+
+## Docker
+
+Build image:
+
+```bash
+docker build -t finance-tracker:1.0 .
+```
+
+Run container:
+
+```bash
+docker run --rm -p 8000:8000 finance-tracker:1.0
+```
+
+Run with production environment and persistent SQLite volume:
+
+```bash
+docker run --rm -p 8000:8000 \
+  -e APP_ENV=production \
+  -e LOG_LEVEL=INFO \
+  -e DATABASE_URL=sqlite:////app/data/finance_tracker.db \
+  -v finance_tracker_data:/app/data \
+  finance-tracker:1.0
+```
+
+Health check:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+## CI/CD
+
+GitHub Actions workflow: `.github/workflows/ci.yml`.
+
+The pipeline runs:
+
+```text
+ruff check
+ruff format --check
+mypy src
+pytest -v
+python -m build
+docker build
+```
+
+## Production Checklist
+
+- Tests pass.
+- Lint and format checks pass.
+- Type checking passes.
+- Wheel and sdist build successfully.
+- `.env` is ignored and `.env.example` is tracked.
+- No secrets are stored in source code, README or Dockerfile.
+- Docker image builds and runs as a non-root user.
+- `/health` returns `200`.
+- GitHub Actions workflow is present.
 
 ## Laboratory 5 Files
 
@@ -113,6 +242,16 @@ Run the performance benchmark:
 
 ```bash
 python benchmarks/benchmark_lab09.py
+```
+
+## Laboratory 10 Files
+
+```text
+.env.example
+.dockerignore
+Dockerfile
+.github/workflows/ci.yml
+LICENSE
 ```
 
 ## Author

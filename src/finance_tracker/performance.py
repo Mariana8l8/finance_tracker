@@ -10,7 +10,7 @@ from functools import lru_cache
 from math import sqrt
 from threading import Lock, Thread
 from time import perf_counter
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 
 CATEGORIES: tuple[str, ...] = (
@@ -142,32 +142,36 @@ def statistics_numpy(
 
     import numpy as np
 
-    category_ids = np.asarray(
+    category_ids: Any = np.asarray(
         [CATEGORIES.index(record.category) for record in records],
         dtype=np.int16,
     )
-    month_ids = np.asarray(
+    month_ids: Any = np.asarray(
         [MONTHS.index(record.month) for record in records],
         dtype=np.int16,
     )
-    type_ids = np.asarray(
+    type_ids: Any = np.asarray(
         [1 if record.transaction_type == "income" else 0 for record in records],
         dtype=np.int8,
     )
-    amounts = np.asarray([record.amount for record in records], dtype=np.float64)
+    amounts: Any = np.asarray([record.amount for record in records], dtype=np.float64)
 
     income = float(amounts[type_ids == 1].sum())
     expenses = float(amounts[type_ids == 0].sum())
-    category_totals = tuple(sorted(
-        (category, float(amounts[category_ids == category_index].sum()))
-        for category_index, category in enumerate(CATEGORIES)
-        if bool(np.any(category_ids == category_index))
-    ))
-    monthly_totals = tuple(sorted(
-        (month, float(amounts[month_ids == month_index].sum()))
-        for month_index, month in enumerate(MONTHS)
-        if bool(np.any(month_ids == month_index))
-    ))
+    category_totals = tuple(
+        sorted(
+            (category, float(amounts[category_ids == category_index].sum()))
+            for category_index, category in enumerate(CATEGORIES)
+            if bool(np.any(category_ids == category_index))
+        )
+    )
+    monthly_totals = tuple(
+        sorted(
+            (month, float(amounts[month_ids == month_index].sum()))
+            for month_index, month in enumerate(MONTHS)
+            if bool(np.any(month_ids == month_index))
+        )
+    )
 
     return FinancePerformanceStats(
         count=len(records),
@@ -199,10 +203,7 @@ def count_processed_with_threads(
         with lock:
             processed += local_count
 
-    threads = [
-        Thread(target=worker, args=(chunk,))
-        for chunk in _chunk_records(records, workers)
-    ]
+    threads = [Thread(target=worker, args=(chunk,)) for chunk in _chunk_records(records, workers)]
     for thread in threads:
         thread.start()
     for thread in threads:
@@ -270,10 +271,9 @@ def compare_statistics(
     for field in numeric_fields:
         if abs(getattr(left, field) - getattr(right, field)) > tolerance:
             return False
-    return (
-        _rounded_pairs(left.category_totals) == _rounded_pairs(right.category_totals)
-        and _rounded_pairs(left.monthly_totals) == _rounded_pairs(right.monthly_totals)
-    )
+    return _rounded_pairs(left.category_totals) == _rounded_pairs(
+        right.category_totals
+    ) and _rounded_pairs(left.monthly_totals) == _rounded_pairs(right.monthly_totals)
 
 
 def _partial_statistics(
@@ -366,9 +366,7 @@ def _finish_statistics(
 ) -> FinancePerformanceStats:
     average = partial.amount_sum / partial.count if partial.count else 0.0
     variance = (
-        partial.amount_square_sum / partial.count - average * average
-        if partial.count
-        else 0.0
+        partial.amount_square_sum / partial.count - average * average if partial.count else 0.0
     )
     return FinancePerformanceStats(
         count=partial.count,
@@ -391,10 +389,7 @@ def _chunk_records(
     if workers <= 0:
         raise ValueError("workers must be greater than zero.")
     chunk_size = max(1, (len(records) + workers - 1) // workers)
-    return [
-        records[start:start + chunk_size]
-        for start in range(0, len(records), chunk_size)
-    ]
+    return [records[start : start + chunk_size] for start in range(0, len(records), chunk_size)]
 
 
 def _rounded_pairs(

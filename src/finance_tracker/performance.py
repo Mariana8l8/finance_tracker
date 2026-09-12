@@ -158,16 +158,16 @@ def statistics_numpy(
 
     income = float(amounts[type_ids == 1].sum())
     expenses = float(amounts[type_ids == 0].sum())
-    category_totals = tuple(
+    category_totals = tuple(sorted(
         (category, float(amounts[category_ids == category_index].sum()))
         for category_index, category in enumerate(CATEGORIES)
         if bool(np.any(category_ids == category_index))
-    )
-    monthly_totals = tuple(
+    ))
+    monthly_totals = tuple(sorted(
         (month, float(amounts[month_ids == month_index].sum()))
         for month_index, month in enumerate(MONTHS)
         if bool(np.any(month_ids == month_index))
-    )
+    ))
 
     return FinancePerformanceStats(
         count=len(records),

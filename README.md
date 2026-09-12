@@ -12,6 +12,7 @@ Variant 12 uses one cross-lab domain: finance tracker.
 - Laboratory work 6: pytest test suite, mocks, tmp_path, monkeypatch and coverage.
 - Laboratory work 7: SQLite persistence layer, SQLAlchemy ORM, migrations and repositories.
 - Laboratory work 8: FastAPI REST API, Pydantic schemas, async tasks and HTTPX.
+- Laboratory work 9: performance profiling, concurrency, multiprocessing, NumPy and caching.
 
 ## Description
 
@@ -97,6 +98,21 @@ Run the API:
 
 ```bash
 uvicorn finance_tracker.api:app --reload
+```
+
+## Laboratory 9 Files
+
+```text
+src/finance_tracker/performance.py
+src/finance_tracker/profiling.py
+benchmarks/benchmark_lab09.py
+tests/test_performance_lab09.py
+```
+
+Run the performance benchmark:
+
+```bash
+python benchmarks/benchmark_lab09.py
 ```
 
 ## Author

@@ -99,6 +99,19 @@ def filter_transactions(
     return [transaction for transaction in items if predicate(transaction)]
 
 
+def filter_transactions_by_amount(
+    items: list[Transaction],
+    threshold: float,
+) -> list[Transaction]:
+    """Return transactions whose amount is at least the given threshold."""
+
+    return [
+        transaction
+        for transaction in items
+        if cast(float, transaction["amount"]) >= threshold
+    ]
+
+
 def create_type_filter(
     *allowed_types: str,
 ) -> Callable[[Transaction], bool]:

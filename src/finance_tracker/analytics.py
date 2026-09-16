@@ -39,6 +39,21 @@ def calculate_expenses_by_category(
     return dict(result)
 
 
+def find_largest_expense(
+    items: list[Transaction],
+) -> Transaction | None:
+    """Return the expense transaction with the largest amount."""
+
+    expenses = get_expense_transactions(items)
+    if not expenses:
+        return None
+
+    return max(
+        expenses,
+        key=lambda transaction: cast(float, transaction["amount"]),
+    )
+
+
 @measure_time("finance summary generation")
 def build_summary(
     items: list[Transaction],

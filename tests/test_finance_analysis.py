@@ -4,6 +4,7 @@ from unittest import TestCase, main
 from finance_tracker.analytics import (
     build_summary,
     calculate_expenses_by_category,
+    find_largest_expense,
     rank_categories_by_expenses,
 )
 from finance_tracker.data import transactions
@@ -16,6 +17,7 @@ from finance_tracker.processors import (
     create_transaction_record,
     create_type_filter,
     filter_transactions,
+    filter_transactions_by_amount,
     get_expense_transactions,
     get_unique_categories,
     group_transactions_by_category,
@@ -103,6 +105,21 @@ class TestFinanceAnalysis(TestCase):
 
         self.assertEqual(expenses["Food"], 2830.75)
         self.assertEqual(ranking[0], ("Food", 2830.75))
+
+    def test_largest_expense_and_amount_threshold(self) -> None:
+        largest = find_largest_expense(transactions)
+        filtered = filter_transactions_by_amount(transactions, threshold=2_000.0)
+
+        self.assertIsNotNone(largest)
+        assert largest is not None
+        self.assertEqual(largest["id"], 6)
+        self.assertEqual(
+            {transaction["id"] for transaction in filtered},
+            {1, 4, 6, 7},
+        )
+
+    def test_largest_expense_for_empty_collection(self) -> None:
+        self.assertIsNone(find_largest_expense([]))
 
 
 if __name__ == "__main__":

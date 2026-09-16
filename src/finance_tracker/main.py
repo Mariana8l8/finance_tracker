@@ -8,6 +8,7 @@ from typing import cast
 
 from finance_tracker.analytics import (
     build_summary,
+    find_largest_expense,
     get_complexity_notes,
     rank_categories_by_count,
     rank_categories_by_expenses,
@@ -23,7 +24,6 @@ from finance_tracker.db_repositories import (
 )
 from finance_tracker.db_services import transfer_between_budgets
 from finance_tracker.dbapi import find_transactions_by_category_dbapi
-from finance_tracker.exceptions import FinanceTrackerError
 from finance_tracker.file_exporters import JsonTransactionExporter
 from finance_tracker.file_pipeline import (
     ImportStatistics,
@@ -41,6 +41,7 @@ from finance_tracker.processors import (
     create_transaction_record,
     create_type_filter,
     filter_transactions,
+    filter_transactions_by_amount,
     get_expense_transactions,
     get_unique_categories,
     group_transactions_by_category,
@@ -179,10 +180,18 @@ def run_lab2_demo() -> None:
 
     is_expense = create_type_filter("expense")
     expense_transactions = filter_transactions(transactions, is_expense)
+    income_transactions = filter_transactions(transactions, create_type_filter("income"))
     print_transactions(
         "FILTERED BY CLOSURE",
         expense_transactions,
     )
+
+    print_transactions(
+        "AMOUNT AT LEAST 2,000",
+        filter_transactions_by_amount(transactions, threshold=2_000.0),
+    )
+
+    print("\nLargest expense:", find_largest_expense(transactions))
 
     print_transactions(
         "SORTED BY AMOUNT",
@@ -198,7 +207,10 @@ def run_lab2_demo() -> None:
         description="Created with kwargs",
     )
     print("\nCreated via **kwargs:", created_transaction)
-    print("Total via *args:", calculate_total_transactions(transactions, expense_transactions))
+    print(
+        "Total via *args:",
+        calculate_total_transactions(income_transactions, expense_transactions),
+    )
     print("Recent history via deque:", list(build_recent_history(transactions)))
     print("Expense category rating:", rank_categories_by_expenses(transactions))
     print("Category count rating:", rank_categories_by_count(transactions))
@@ -475,13 +487,9 @@ def run_lab7_demo() -> None:
 
 
 def main() -> None:
-    """Run the current laboratory demonstration."""
+    """Run the laboratory work 2 demonstration."""
 
-    try:
-        run_lab7_demo()
-    except FinanceTrackerError as error:
-        logging.getLogger(__name__).error("Application error: %s", error)
-        raise SystemExit(1) from error
+    run_lab2_demo()
 
 
 if __name__ == "__main__":
